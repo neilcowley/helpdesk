@@ -1,0 +1,209 @@
+<html lang="en" 
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://xmlns.jcp.org/jsf/html"
+	xmlns:f="http://xmlns.jcp.org/jsf/core"
+	xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+	xmlns:jsf="http://xmlns.jcp.org/jsf"
+	xmlns:a="http://xmlns.jcp.org/jsf/passthrough"
+	xmlns:fields="http://xmlns.jcp.org/jsf/composite/fields">
+	<f:metadata>
+		<f:viewParam name="i" value="#{usersBean.userId}" />
+	   	<f:viewParam name="pageFrom" value="#{navigatorBean.pageFrom}" />
+	</f:metadata>
+	<ui:composition template="/resources/templates/commonLayout.xhtml">
+		<ui:define name="content">
+			<h:form id="userForm">
+				<ui:param name="user" value="#{usersBean.user}" />
+				<span style="display:none"><!-- REQUIRED TO INITIALISE THE User OBJECT --><h:outputText value="#{user.id}" /></span>
+				<!-- register a PostValidateEvent  
+				<f:event listener="#{usersBean.validatePassword}" type="postValidate" />
+				-->
+				<legend>#{lang.user_pageTitle}</legend>
+				<div class="row">
+					<div class="col-sm-12">
+						<!-- Close -->
+						<h:link styleClass="btn btn-danger" outcome="#{navigatorBean.pageFrom}">
+							<i class="fa fa-caret-left fa-lg" />
+							<h:outputText value=" #{lang.user_btn_close}" />
+						</h:link>
+						<!-- EDIT -->
+						<h:commandLink action="#{usersBean.edit}"
+							style="margin-left:5px"
+							styleClass="btn btn-primary"
+							rendered="#{!usersBean.editMode and (usersBean.loggedOnUser.userName == user.userName or usersBean.isAdminUser())}">
+							<i class="fa fa-pencil-square-o" />						
+							<h:outputText value=" #{lang.user_btn_edit}"/>
+							<f:ajax render="@all" execute="@this" />					
+						</h:commandLink>
+						<!-- SAVE -->			
+						<h:commandLink action="#{usersBean.saveUser(false)}"
+							style="margin-left:5px"
+							styleClass="btn btn-primary"
+							rendered="#{usersBean.editMode}">
+							<i class="fa fa-floppy-o" />
+							<h:outputText value=" #{lang.user_btn_save}"/>
+							<f:ajax render="@all" execute="@form" />	
+						</h:commandLink>
+						<!-- SAVE AND CLOSE -->
+						<h:commandLink action="#{usersBean.saveUser(true)}"
+							style="margin-left:5px"
+							styleClass="btn btn-primary"
+							rendered="#{usersBean.editMode}">
+							<i class="fa fa-floppy-o" />
+							<h:outputText value=" #{lang.user_btn_saveClose}"/>
+							<f:ajax render="@all" execute="@form" />					
+						</h:commandLink>	
+						<!-- DELETE action="#{usersBean.deleteUser}" -->
+						<h:commandLink 
+							style="margin-left:5px" 
+							styleClass="btn btn-warning"
+							rendered="#{usersBean.dspDeleteButton()}">
+							<i class="fa fa-trash-o" />
+							<h:outputText value=" #{lang.user_btn_deleteAccount}"/>
+							<f:ajax render="deleteUserForm" execute="deleteUserForm"
+							onevent="function(data){if(data.status==='success') $('#deleteUserDialog').modal({backdrop: 'static', keyboard: false});}" />							
+						</h:commandLink>
+					</div>
+				</div>
+				<hr />
+				<div class="row">
+					<div class="col-sm-6">						
+						<!--  <fields:inputTextPF value="#{user.firstName}" label="First name: " 
+							editMode="#{usersBean.editMode}" disabled="false" 
+							ajaxEvent="blur" ajaxUpdate="userForm:j_idt72:userName" ajaxListener="#{usersBean.updateUserName()}"
+							fieldId="firstName" fieldBinding="#{firstName}" required="true" />	 -->
+						<fields:inputText value="#{user.firstName}" label="#{lang.user_tbl_col_firstName}: " 
+							editMode="#{usersBean.editMode}" disabled="false" styleClass="checkUserName fName" 
+							fieldId="firstName" fieldBinding="#{firstName}" required="true" />		
+										
+					</div>
+					<div class="col-sm-6">
+						<!-- <fields:inputTextPF value="#{user.lastName}" label="Last name: " 
+							editMode="#{usersBean.editMode}" disabled="false" 
+							ajaxEvent="blur" ajaxUpdate="userForm:j_idt72:userName" ajaxListener="#{usersBean.updateUserName()}"
+							fieldId="lastName" fieldBinding="#{lastName}" required="true" /> -->		
+						<fields:inputText value="#{user.lastName}" label="#{lang.user_tbl_col_lastName}: " 
+							editMode="#{usersBean.editMode}" disabled="false" styleClass="checkUserName lName"
+							fieldId="lastName" fieldBinding="#{lastName}" required="true" />		
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-sm-6">						
+						<fields:inputText value="#{user.userName}" label="#{lang.user_tbl_col_userName}: " 
+							editMode="#{usersBean.editMode}" disabled="false" styleClass="fullName"
+							fieldId="userName" fieldBinding="#{userName}" required="true" />		
+					</div>
+					<div class="col-sm-6">
+						<!-- NC 27/03/17 - don't need to prevent users from changing email address - disabled="#{usersBean.isNew()==false?true:false}"  -->
+					 	<fields:inputText value="#{user.email}" label="#{lang.user_tbl_col_email}: "
+							editMode="#{usersBean.editMode}" 
+							fieldId="email" fieldBinding="#{email}" required="true">	
+							<f:validator validatorId="EmailValidator" for="evhValidator" />
+						</fields:inputText>
+							
+					</div>
+				</div>
+				
+				<div class="row">
+					<div class="col-sm-6">		
+						<fields:inputSelectOneMenu 
+							value="#{user.role}" 
+							readModeValue="#{lang[user.role]}"
+							defaultValue="#{lang['user_list_role_default']}"
+							label="#{lang.user_tbl_col_role}:" 
+							fieldId="role" 
+							fieldBinding="#{role}"
+							required="true"		
+							converter="#{StringConverter}" 
+							editMode="#{usersBean.editMode and usersBean.isAdminUser()}"	
+							selectList="#{usersBean.roleList}" 
+							ajaxDisabled="true" />				
+					</div>
+					<h:panelGroup  class="col-sm-6" rendered="#{usersBean.isAdminUser() and user.role=='admin'}" >
+						<!-- 
+						<h:outputLabel styleClass="control-label small" for="helpDeskNotification" value="HelpDesk Notification?"/><br />
+						<h:selectBooleanCheckbox id="helpDeskNotification" rendered="#{usersBean.editMode}" value="#{user.helpDeskNotification}" />
+						<h:outputText rendered="#{!usersBean.editMode}" value="#{user.helpDeskNotification}"/>
+						 -->
+						 <fields:inputBooleanCheckbox
+							value="#{user.helpDeskNotification}" 
+							readModeValue="#{user.readHelpdeskNotification()}"
+							editModeText="#{lang['user_admin_helpdesk_notification_yes']}"
+							label="#{lang['user_tbl_col_helpdesk_notification']}"
+							fieldId="helpDeskNotification" 
+							fieldBinding="#{helpDeskNotification}"	
+							editMode="#{usersBean.editMode and usersBean.isAdminUser()}" />			
+					</h:panelGroup> 
+				</div>
+				
+				<div class="row" jsf:rendered="#{usersBean.editMode and (usersBean.loggedOnUser.userName == user.userName or usersBean.isAdminUser())}">
+					<div class="col-sm-12">
+					
+						<div class="row">
+							<div class="col-sm-10">	
+						   		<h:commandButton action="#{usersBean.changePassword}" value="#{lang.user_btn_changePassword}" styleClass="btn btn-primary"
+						   		rendered="#{!usersBean.new}">
+						   			<f:ajax render="@form" execute="@this"/>
+						   			<f:actionListener type="org.omnifaces.eventlistener.ResetInputAjaxActionListener" />
+						   		</h:commandButton>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-sm-6">						
+								<fields:inputSecret value="#{usersBean.newPassword}" label="#{lang.user_tbl_col_password}: " id="np"
+									editMode="#{true}" disabled="#{usersBean.passwordChange=='No'?true:false}"
+									fieldId="newPassword" fieldBinding="#{newPassword}" required="#{usersBean.passwordChange=='Yes'?true:false}">
+									<f:validator validatorId="PasswordValidator" for="evhPWValidator" />
+									<f:attribute name="checkConfirmPassword" value="#{confirmNewPassword}" />
+								</fields:inputSecret>
+							</div>
+							<div class="col-sm-6">						
+								<fields:inputSecret value="#{usersBean.confirmNewPassword}" label="#{lang.user_tbl_col_confirmPw}: " id="cnp"
+									editMode="#{true}" disabled="#{usersBean.passwordChange=='No'?true:false}"
+									fieldId="confirmNewPassword" fieldBinding="#{confirmNewPassword}" required="#{usersBean.passwordChange=='Yes'?true:false}"  />
+							</div>
+						</div>
+					</div>
+				</div>
+			</h:form>
+			<!-- =========================================  DELETE USER CONFORMATION CALL ========================================= -->
+			<div class="modal" role="dialog" id="deleteUserDialog">
+				<h:form id="deleteUserForm">	
+					<div class="modal-dialog dialog-lg">							
+						<div class="modal-content">
+							<div class="modal-header">
+								<button type="button" class="close" data-dismiss="modal"><i class="fa fa-times" /></button>
+								<h4 class="modal-title">#{lang.user_diaDU_title}</h4>
+							</div>
+							<div class="modal-body">		      
+								<div class="row">
+									<div class="col-xs-12">		
+									 	<p>#{lang.user_diaDU_desc}</p> 
+									</div>
+								</div>							
+							</div>	
+							<div class="modal-footer">
+						      	<h:commandLink action="#{usersBean.deleteUser}" 
+									style="margin-left:5px" styleClass="btn btn-primary">							
+									<f:ajax render="@form userForm onsuccess" execute="@form" />			
+									<i class="fa fa-check" /><h:outputText value=" #{lang.user_diaDU_btn_del}" />	
+								</h:commandLink>
+								<h:commandLink style="margin-left:5px"
+									styleClass="btn btn-default">							
+									<f:ajax render="@form" execute="@form"
+										onevent="function(data){if(data.status==='success') $('#deleteUserDialog').modal('hide');}"/>							
+									<i class="fa fa-times" /><h:outputText value=" #{lang.user_diaDU_btn_cancel}"/>					
+								</h:commandLink>
+								<h:panelGroup id="onsuccess">
+								    <h:outputScript rendered="#{facesContext.postback and not facesContext.validationFailed}">
+								        $('#deleteUserDialog').modal('hide');
+								    </h:outputScript>
+								</h:panelGroup>
+					      	</div>
+						</div>
+					</div>
+				</h:form>
+			</div>
+		</ui:define>
+	</ui:composition>
+</html>

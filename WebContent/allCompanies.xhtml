@@ -1,0 +1,60 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:a="http://xmlns.jcp.org/jsf/passthrough"
+      xmlns:jsf="http://xmlns.jcp.org/jsf"
+      xmlns:p="http://primefaces.org/ui">
+	<ui:composition template="/resources/templates/commonLayout.xhtml">
+		<ui:define name="content">
+			<legend>#{lang.compL_pageTitle}</legend>
+			<h:form id="searchForm">
+				<!-- SEARCH FUNCTIONALITY -->
+				<div class="row">
+					<div class="form-horizontal">
+	  					<div class="form-group">
+							<div class="col-sm-12" style="margin-left:15px">
+								<h:inputText id="keyword" value="#{companyBean.keyword}" styleClass="form-control input-sm" style="width:20%;display:inline" />						
+								<h:commandLink id="search" style="margin-left:5px"
+									styleClass="btn btn-primary">
+									<i class="fa fa-floppy-o" />
+									<h:outputText value=" #{lang.compL_btn_search}" />
+								</h:commandLink>
+								<h:link outcome="company" 
+									styleClass="btn btn-primary" style="margin-left:5px">
+									<i class="fa fa-building-o" /><h:outputText value=" #{lang.compL_btn_newCompany}"/>
+									<f:param name="pageFrom" value="#{view.viewId}" />
+								</h:link>	
+							</div>		
+						</div>
+					</div>
+				</div>
+			</h:form>
+			
+			<!-- LIST OF ALL COMPANIES -->
+			<h:form id="allCompaniesList">
+				<p:dataTable value="#{companyBean.companies}" var="company" styleClass="table table-striped table-bordered"
+				rows="20" paginator="true" paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+				columnClasses="dataTableColPad1,dataTableColPad2,dataTableColPad3,dataTableColPad4" resizableColumns="true"> 
+					<p:column headerText="#{lang.compL_tbl_col_name}"  sortBy="#{company.companyName}" filterMatchMode="contains" filterBy="#{company.companyName}" filterStyle="display:none">	
+						<h:link value="#{company.companyName}" outcome="company?i=#{company.id}" style="color:#337ab7">
+							<f:param name="pageFrom" value="#{view.viewId}"/>
+						</h:link>
+					</p:column>		
+					<p:column headerText="#{lang.compL_tbl_col_code}" sortBy="#{company.companyCode}" filterBy="#{company.companyCode}" filterStyle="display:none">
+						<h:outputText value="#{company.companyCode}" />			
+					</p:column>
+					<p:column headerText="#{lang.compL_tbl_col_supportType}" sortBy="#{company.typeOfSupport}" filterBy="#{company.typeOfSupport}" filterStyle="display:none">
+						<h:outputText value="#{lang[company.typeOfSupport]}" />			
+					</p:column>	
+					<p:column headerText="#{lang.compL_tbl_col_created}" sortBy="#{company.dateCreated}" filterBy="#{company.dateCreated}" filterStyle="display:none">
+						<h:outputText value="#{company.dateCreated}">
+							<f:convertDateTime pattern="dd MMM yyyy" timezone="GMT"/>
+						</h:outputText>		
+					</p:column>	
+				</p:dataTable>
+			</h:form>
+				
+		</ui:define>
+	</ui:composition>
+</html>

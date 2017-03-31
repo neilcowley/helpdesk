@@ -1,0 +1,468 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:jsf="http://xmlns.jcp.org/jsf"
+      xmlns:fields="http://xmlns.jcp.org/jsf/composite/fields"
+      xmlns:p="http://primefaces.org/ui">
+    <f:metadata>
+		<f:viewParam name="pageFrom" value="#{navigatorBean.pageFrom}" />
+    </f:metadata>
+	<ui:composition template="/resources/templates/commonLayout.xhtml">
+		<ui:define name="content">
+			<h:form id="callDetails" enctype="multipart/form-data">
+				<ui:param name="call" value="#{supportCallBean.supportCall}" />	
+				<legend>#{lang.sc_pageTitle}: <h:outputText value="#{lang[call.status]}" /></legend>
+				<h:panelGroup id="actionBar">
+					<!-- CLOSE -->
+					<h:link styleClass="btn btn-danger" outcome="#{navigatorBean.pageFrom}"
+					style="margin-left:5px;margin-bottom:4px;white-space: normal;">
+						<i class="fa fa-caret-left" />
+						<h:outputText value=" #{lang.sc_btn_close}" />
+					</h:link>
+					<!-- EDIT -->
+					<h:commandLink action="#{supportCallBean.edit}"
+						style="margin-left:5px;margin-bottom:4px;white-space: normal;"	styleClass="btn btn-primary"
+						rendered="#{supportCallBean.isEditable() and !supportCallBean.editMode}">
+						<i class="fa fa-pencil-square-o" />
+						<h:outputText value=" #{lang.sc_btn_edit}"/>
+						<f:ajax render="callDetails" execute="@this" />
+					</h:commandLink>
+					<!-- SAVE -->
+					<h:commandLink action="#{supportCallBean.UpdateCall(false)}"
+						style="margin-left:5px;margin-bottom:4px;white-space: normal;"	styleClass="btn btn-primary"
+						rendered="#{supportCallBean.editMode}">
+						<i class="fa fa-floppy-o" />
+						<h:outputText value=" #{lang.sc_btn_save}"/>
+					</h:commandLink>
+					<!-- SAVE & CLOSE -->
+					<h:commandLink action="#{supportCallBean.UpdateCall(true)}"
+						style="margin-left:5px;margin-bottom:4px;white-space: normal;"	styleClass="btn btn-primary"
+						rendered="#{supportCallBean.editMode}">
+						<i class="fa fa-floppy-o" />
+						<h:outputText value=" #{lang.sc_btn_saveClose}"/>					
+					</h:commandLink>
+					<h:panelGroup  rendered="#{usersBean.isAdminUser() and supportCallBean.editMode and !supportCallBean.new}" >
+						<!-- REASSIGNED TO -->
+						<h:commandLink id="btn_assignedTo"
+							style="margin-left:5px;margin-bottom:4px;white-space: normal;"	styleClass="btn btn-primary"
+							rendered="#{call.status=='in_progress'}">
+							<i class="fa fa-user" />
+							<h:outputText value=" #{lang.sc_btn_reassignCall}"/>	
+							<f:ajax render="assignCallForm" execute="assignCallForm"
+							onevent="function(data){if(data.status==='success') $('#assignCallDialog').modal({backdrop: 'static', keyboard: false});}" />				
+						</h:commandLink>
+						<!-- UPDATE CALL -->
+						<h:commandLink id="btn_callUpdate" action="#{supportCallBean.setCallUpdateType('update')}"
+							style="margin-left:5px;margin-bottom:4px;white-space: normal;"	styleClass="btn btn-primary"
+							rendered="#{!supportCallBean.new and (call.status=='on_hold' or call.status=='in_progress')}">
+							<i class="fa fa-refresh" />
+							<h:outputText value=" #{lang.sc_btn_updateCall}"/>	
+							<f:ajax render="updateCallForm" execute="updateCallForm"
+							onevent="function(data){if(data.status==='success') $('#updateCallDialog').modal({backdrop: 'static', keyboard: false});}" />				
+						</h:commandLink>
+						<!-- COMPLETE CALL -->
+						<h:commandLink id="btn_callComplete" action="#{supportCallBean.setCallUpdateType('complete')}"
+							style="margin-left:5px;margin-bottom:4px;white-space: normal;"	styleClass="btn btn-success"
+							rendered="#{call.status=='in_progress'}">
+							<i class="fa fa-undo" />
+							<h:outputText value=" #{lang.sc_btn_completeCall}"/>
+							<f:ajax render="updateCallForm" execute="updateCallForm"
+							onevent="function(data){if(data.status==='success') $('#updateCallDialog').modal({backdrop: 'static', keyboard: false});}" />				
+						</h:commandLink>
+						<!-- HOLD CALL -->
+						<h:commandLink id="btn_callHold" action="#{supportCallBean.setCallUpdateType('on_hold')}"
+							style="margin-left:5px;margin-bottom:4px;white-space: normal;"	styleClass="btn btn-warning"
+							rendered="#{!supportCallBean.new and call.status=='in_progress'}">
+							<i class="fa fa-hand-rock-o" />
+							<h:outputText value=" #{lang.sc_btn_holdCall}"/>	
+							<f:ajax render="updateCallForm" execute="updateCallForm"
+							onevent="function(data){if(data.status==='success') $('#updateCallDialog').modal({backdrop: 'static', keyboard: false});}" />				
+						</h:commandLink>
+						<!-- RE-ACTIVATE CALL -->
+						<h:commandLink id="btn_callReactivate" action="#{supportCallBean.ReactivateCall}"
+							style="margin-left:5px;margin-bottom:4px;white-space: normal;" styleClass="btn btn-success"
+							rendered="#{call.status=='on_hold'}">
+							<i class="fa fa-undo" />
+							<h:outputText value=" #{lang.sc_btn_reactivate}"/>			
+						</h:commandLink>
+						<!-- CANCEL CALL -->
+						<h:commandLink id="btn_callCancel" action="#{supportCallBean.setCallUpdateType('cancelled')}"
+							style="margin-left:5px;margin-bottom:4px;white-space: normal;"	styleClass="btn btn-danger"
+							rendered="#{call.status=='new' or call.status=='in_progress'}">
+							<i class="fa fa-undo" />
+							<h:outputText value=" #{lang.sc_btn_cancelCall}"/>	
+							<f:ajax render="updateCallForm" execute="updateCallForm"
+							onevent="function(data){if(data.status==='success') $('#updateCallDialog').modal({backdrop: 'static', keyboard: false});}" />				
+						</h:commandLink>
+						<!-- DELETE CALL -->
+						<h:commandLink id="btn_callDelete" 
+							style="margin-left:5px;margin-bottom:4px;white-space: normal;"	styleClass="btn btn-danger"
+							rendered="#{call.status!='complete' or (call.status=='complete'and usersBean.isManager())}">
+							<i class="fa fa-trash-o" />
+							<h:outputText value=" #{lang.sc_btn_deleteCall}"/>
+							<f:ajax render="deleteCallForm" execute="deleteCallForm"
+							onevent="function(data){if(data.status==='success') $('#deleteCallDialog').modal({backdrop: 'static', keyboard: false});}" />							
+						</h:commandLink>
+					</h:panelGroup>
+				</h:panelGroup>
+				<hr />
+				<div class="row">
+					<!-- COMPANY NAME -->
+					<div class="col-sm-3 col-lg-3">
+						<fields:inputSelectOneMenu 
+							value="#{call.company}" 
+							readModeValue="#{call.company.companyName}"
+							label="#{lang.sc_lbl_companyName}: " 
+							fieldId="companyName" 
+							fieldBinding="#{companyName}" 
+							required="true"		 
+							editMode="#{supportCallBean.editMode and call.status=='new'}"	
+							converter="#{companyConverter}"
+							defaultValue="#{SUPPORT_CALL_DD_COMPANY_DEFAULT}"
+							selectList="#{supportCallBean.companies}" 
+							itemLabel="companyName"
+							ajaxDisabled="false"
+							ajaxRender="#{companyUser.clientId} #{typeOfSupport.clientId}"  
+							ajaxExecute="@this"
+							ajaxListener="#{supportCallBean.getAssociatedCompanyUsers()}" />
+					</div>
+					<!-- COMPANY CONTACT  -->
+					<div class="col-sm-3 col-lg-3">
+						<fields:inputSelectOneMenu 
+							label="#{lang.sc_lbl_companyContact}: " 
+							fieldId="companyUser" 
+							value="#{call.companyUser}" 
+							readModeValue="#{call.companyUser.user.userName}"
+							fieldBinding="#{companyUser}" 	
+							required="false"	 
+							editMode="#{supportCallBean.editMode and call.status!='cancelled' and call.status!='complete'}"	
+							converter="#{companyUserConverter}"
+							defaultValue="#{SUPPORT_CALL_DD_COMP_USER_DEFAULT}"
+							selectList="#{supportCallBean.companyUsers}" 
+							itemLabel="fullName"
+							ajaxDisabled="true" />
+					</div>
+					<!-- SUPPORT TYPE -->
+					<div class="col-sm-3 col-lg-3">
+						<div class="form-group">
+							<h:outputLabel styleClass="control-label small" for="typeOfSupport" value="#{lang.sc_lbl_typeOfSupport}:"/>
+							<h:panelGroup>
+								<p class="form-control-static small">
+									<h:outputText id="typeOfSupport" binding="#{typeOfSupport}" value="#{lang[call.company.typeOfSupport]}" />
+								</p>
+							</h:panelGroup>	
+						</div>
+					</div>
+					<!-- CALL REFS -->
+					<div class="col-sm-3 col-lg-3">
+						<div class="form-group">
+							<h:outputLabel styleClass="control-label small" for="callRefs" value="#{lang.sc_lbl_callReference}:"/>
+							<h:panelGroup>
+								<p class="form-control-static small">
+									<h:outputText id="callRefs" binding="#{callRefs}" value="#{call.callRefs}" />
+								</p>
+							</h:panelGroup>
+						</div>
+					</div>
+				</div><!-- //ROW -->
+				<div class="row">
+					<!-- SUBJECT -->
+					<div class="col-sm-3 col-lg-3">
+						<fields:inputText value="#{call.subject}" label="#{lang.sc_lbl_subject}: " disabled="false" 
+							editMode="#{supportCallBean.editMode and call.status!='cancelled' and call.status!='complete' }"	
+							fieldId="subject" fieldBinding="#{subject}" required="true" />
+					</div>
+					<!-- ASSIGNED TO converter="#{adminConverter}" readModeValue="#{userDao.getAssignedTo(call.assignedToId).userName}"	 -->
+					<div class="col-sm-3 col-lg-3" jsf:rendered="#{usersBean.isAdminUser()}">						
+						<fields:inputSelectOneMenu 
+							label="#{lang.sc_lbl_assignedTo}:"
+							fieldId="assignedToId"
+							value="#{supportCallBean.assignedTo}"
+							fieldBinding="#{assignedToId}"
+							editMode="#{supportCallBean.editMode and call.status=='new'}"
+							readModeValue="#{supportCallBean.assignedToName}"
+							required="#{usersBean.isAdminUser()==true?true:false}"
+							converter="#{adminConverter}"
+							defaultValue="[Please assign this call]"
+							selectList="#{usersBean.allAdminUsers}"
+							itemLabel="userName"
+							ajaxDisabled="false"
+							ajaxRender="#{assignedToId.clientId}"
+							ajaxExecute="@this"
+							ajaxListener="#{supportCallBean.AssignCall()}" />
+					</div>
+					<!-- CREATED BY -->
+					<div class="col-sm-3 col-lg-3">
+						<div class="form-group">
+							<h:outputLabel styleClass="control-label small" for="createBy" value="#{lang.sc_lbl_createdBy}:"/>
+							<h:panelGroup>							
+								<p class="form-control-static small">
+									<h:outputText id="createBy" value="#{call.senderName}"  />
+								</p>
+							</h:panelGroup>
+						</div>
+					</div>
+		  			<!-- DATE CREATED -->
+					<div class="col-sm-3 col-lg-3">
+						<div class="form-group">
+							<h:outputLabel styleClass="control-label small" value="#{lang.sc_lbl_dateCreated}:"/>
+							<h:panelGroup>
+								<p class="form-control-static small">
+									 <h:outputText value="#{call.dateCreated}">
+									 	<f:convertDateTime pattern="dd MMM yyyy" timezone="GMT"/>
+									 </h:outputText>	 
+								</p>
+							</h:panelGroup>					
+						</div>
+					</div>
+				</div><!-- // ROW -->
+				<div class="row">
+					<div class="col-sm-6">
+						<!-- CALL DETAILS 
+						<fields:inputTextarea value="#{call.callDetails}" label="Call Details: " editMode="#{supportCallBean.editMode}"	
+							fieldId="callDetails" fieldBinding="#{callDetails}" required="true" rows="15" 
+							rendered="#{call.status!='new'}" />	
+						<p:editor id="callDetails" widgetVar="editorWidget" value="#{call.callDetails}" height="400"
+							styleClass="#{!supportCallBean.editRTField ? 'hideToolbar hideBoxBorder':''}" 
+							disabled="#{!supportCallBean.editRTField}" />
+						<fields:inputTextarea value="#{call.callDetails}" label="Call Details: " editMode="#{supportCallBean.editMode}"	
+							fieldId="callDetails" fieldBinding="#{callDetails}" required="true" rows="15"/>	
+						-->
+						<fields:inputRT value="#{call.callDetails}"
+							label="#{lang.sc_lbl_callDetails}: "
+							fieldBinding="#{callDetails}"
+							fieldId="callDetails"
+							required="true"
+							disabled="#{!supportCallBean.editRTField}"
+							height="400"
+							classStyle="#{!supportCallBean.editRTField ? 'hideToolbar hideBoxBorder' : ''}" />		
+						<!-- Associated Attachments -->
+						<div>
+							<label class="control-label small">#{lang.sc_lbl_associatedAttachments}:</label>
+							<div>
+								<p:fileUpload 
+									value="#{supportCallBean.file}"
+									widgetVar="fileUploadWidget"
+									fileUploadListener="#{supportCallBean.handleFileUpload}" 	
+									onstart="SUPPORT.addNumberOfFilesToUpload(this);"
+									oncomplete="SUPPORT.attachAndSave(this);"
+									mode="advanced"
+									multiple="true"
+									dragDropSupport="true"
+           							update="@form"
+           							sizeLimit="10000000"
+           							allowTypes="/(\.|\/)(gif|jpe?g|png|pdf|doc|docx|xls|xlsx|xlsm|txt)$/i"
+									skinSimple="true"
+									rendered="#{supportCallBean.editMode and call.status!='cancelled'}" >									    			
+								</p:fileUpload>
+								<p:remoteCommand name="rc" actionListener="#{supportCallBean.UpdateCall(false)}" />
+								<p:growl id="messages" showDetail="true" />
+							</div>	
+						</div>
+
+						<h:panelGroup id="uploadedFiles">
+							<ui:repeat  value="#{supportCallBean.attachmentList}" var="file">
+								<h:commandLink action="#{supportCallBean.removeAttachment(file,false)}" title="#{lang.sc_btn_removefile}" rendered="#{supportCallBean.editMode}" >
+									<i class="fa fa-times fa-lg" style="color:red;padding-right:5px"></i>
+								</h:commandLink>
+								<p:commandLink value="#{file.fileName}" ajax="false">
+						    		<p:fileDownload value="#{supportCallBean.getDownloadFile(file)}" />
+							    </p:commandLink>
+							    <br />
+							</ui:repeat>
+						</h:panelGroup>
+					</div>
+					
+					<div class="col-sm-6">
+						<div class="form-group">						
+							<h:panelGroup>
+								<!-- CALL COMMENTS / HISTORY -->
+								<h:dataTable id="callCommentsTable" value="#{call.callComments}"
+									var="comment" headerClass="small"
+									styleClass="table table-borderless table-condensed">
+									<f:facet name="header">
+										<h:outputText value="#{lang.sc_lbl_callProgress}:"></h:outputText>
+									</f:facet>
+									<h:column>							
+										<h:outputText value="#{comment.comments}" styleClass="small" escape="false" />
+									</h:column>
+								</h:dataTable>
+							</h:panelGroup>	
+						</div>
+					</div>
+				</div><!-- // ROW -->
+			</h:form>
+			<br /><br />
+			<!-- =========================================  DELETE CONFORMATION CALL ========================================= -->
+			<div class="modal" role="dialog" id="deleteCallDialog">
+				<h:form id="deleteCallForm">	
+					<div class="modal-dialog dialog-lg">							
+						<div class="modal-content">
+							<div class="modal-header">
+								<button type="button" class="close" data-dismiss="modal"><i class="fa fa-times" /></button>
+								<h4 class="modal-title">#{lang.sc_diaDC_title}</h4>
+							</div>
+							<div class="modal-body">		      
+								<div class="row">
+									<div class="col-xs-12">		
+									 	<p>#{lang.sc_diaDC_desc}</p>
+									</div>
+								</div>							
+							</div>	
+							<div class="modal-footer">
+						      	<h:commandLink action="#{supportCallBean.deleteCall}" 
+									style="margin-left:5px" styleClass="btn btn-primary">							
+									<f:ajax render="@form callDetails onsuccess" execute="@form" />			
+									<i class="fa fa-check" /><h:outputText value=" #{lang.sc_diaDC_btn_yes}" />	
+								</h:commandLink>
+								<h:commandLink style="margin-left:5px"
+									styleClass="btn btn-default">							
+									<f:ajax render="@form" execute="@form"
+										onevent="function(data){if(data.status==='success') $('#deleteCallDialog').modal('hide');}"/>							
+									<i class="fa fa-times" /><h:outputText value=" #{lang.sc_diaDC_btn_no}"/>					
+								</h:commandLink>
+								<h:panelGroup id="onsuccess">
+								    <h:outputScript rendered="#{facesContext.postback and not facesContext.validationFailed}">
+								        $('#assignCallDialog').modal('hide');
+								    </h:outputScript>
+								</h:panelGroup>
+					      	</div>
+						</div>
+					</div>
+				</h:form>
+			</div>
+			
+			<!-- =========================================  ASSIGN CALL ========================================= -->
+			<div class="modal" role="dialog" id="assignCallDialog">
+				<h:form id="assignCallForm">	
+					<div class="modal-dialog dialog-lg">							
+						<div class="modal-content">
+							<div class="modal-header">
+								<button type="button" class="close" data-dismiss="modal"><i class="fa fa-times" /></button>
+								<h4 class="modal-title">#{lang.sc_diaAC_title}:</h4>
+							</div>
+							<div class="modal-body">		      
+								<div class="row">
+									<div class="col-xs-12">		
+									 	<fields:inputSelectOneMenu 
+											label="#{lang.sc_diaAC_desc}:"
+											fieldId="reassignedTo"
+											value="#{supportCallBean.assignedTo}" 
+											required="true"
+											fieldBinding="#{reassignedTo}"
+											editMode="#{call.status!='new'}"
+											converter="#{adminConverter}"
+											defaultValue="[Please assign this call]"
+											selectList="#{usersBean.allAdminUsers}"
+											itemLabel="userName"
+											ajaxDisabled="true"/>	
+									 			
+									</div>
+								</div>							
+							</div>	
+							<div class="modal-footer">
+						      	<h:commandLink action="#{supportCallBean.reAssignCall}" 
+									style="margin-left:5px" styleClass="btn btn-primary">								
+									<f:ajax render="@form callDetails" execute="@form" />			
+									<i class="fa fa-plus" /><h:outputText value=" #{lang.sc_diaAC_btn_submit}" />	
+								</h:commandLink>
+								<h:commandLink style="margin-left:5px"
+									styleClass="btn btn-default">							
+									<f:ajax render="@form" execute="@this"
+										onevent="function(data){if(data.status==='success') $('#assignCallDialog').modal('hide');}"/>							
+									<i class="fa fa-times" />				
+									<h:outputText value=" #{lang.sc_diaAC_btn_close}"/>
+									<f:actionListener type="org.omnifaces.eventlistener.ResetInputAjaxActionListener" />	
+								</h:commandLink>
+								<h:panelGroup id="onsuccess">
+								    <h:outputScript rendered="#{facesContext.postback and not facesContext.validationFailed}">
+								        $('#assignCallDialog').modal('hide');
+								    </h:outputScript>
+								</h:panelGroup>
+					      	</div>
+						</div>
+					</div>
+				</h:form>
+			</div>
+
+			<!-- ========================================= CALL UPDATE ========================================= -->
+			<div class="modal" role="dialog" id="updateCallDialog">
+				<h:form id="updateCallForm" enctype="multipart/form-data">	
+					<div class="modal-dialog dialog-lg">							
+						<div class="modal-content">
+							<div class="modal-header">
+								<button type="button" class="close" data-dismiss="modal"><i class="fa fa-times" /></button>
+								<h4 class="modal-title"><h:outputText value="#{lang[supportCallBean.callUpdateType]}" /> #{lang.sc_diaCU_title}:</h4>
+							</div>
+							<div class="modal-body">
+								<div class="row">
+									<div class="col-xs-12">
+										<!--  
+										<fields:inputRT value="#{supportCallBean.updateComments}"
+											label="Please enter your comments below before proceeding: "
+											fieldBinding="#{callComments}"
+											fieldId="updateComments"
+											required="true"
+											widgetVar="editorWidget2"
+											disabled="#{false}" />	
+										-->							
+										<fields:inputTextarea value="#{supportCallBean.updateComments}" fieldId="updateComments" 
+											label="#{lang.sc_diaCU_lbl_comments}: "
+											editMode="#{supportCallBean.editMode}" fieldBinding="#{callComments}" 
+											required="true" rows="10" />
+									</div>
+								</div>
+
+								<div class="row">
+									<div class="col-xs-12">
+										<p class="control-label small">#{lang.sc_diaCU_desc}:</p>				
+										<ui:repeat id="repeatControl" value="#{supportCallBean.AllSupportCallUsers()}" 
+										var="u" rendered="#{!supportCallBean.new}">
+											<h:commandLink id="emailLink" action="#{supportCallBean.toggleSendList(u)}"
+												styleClass="btn emailSelect #{supportCallBean.isUserInList(u)?'emailSelected':''}" >
+												<h:outputText value="#{u.userName}" />
+												<f:ajax render="@this" exec="@this"/>
+											</h:commandLink>
+										</ui:repeat>
+										<!-- 
+										pdateCallForm:emailSendList 
+										<h:panelGroup id="emailSendList">
+											<br /><h:inputHidden value="#{supportCallBean.emailSendList}" />
+										</h:panelGroup>
+										 -->
+									</div>
+								</div>
+								<div class="row" jsf:rendered="#{supportCallBean.callUpdateType=='complete'}" >
+									<div class="col-xs-12">
+										<p class="control-label small" style="padding-top:5px">#{lang.sc_diaCU_blb_unitsUsed}:</p>
+											<h:inputText id="unitsUsed" value="#{supportCallBean.timeTaken}" class="form-control input-sm"/>
+									</div>
+								</div>
+							</div>
+							<div class="modal-footer">
+						      	<h:commandLink action="#{supportCallBean.UpdateCall}" style="margin-left:5px" styleClass="btn btn-primary">			
+									<h:outputText value="#{lang[supportCallBean.callUpdateType]} #{lang.sc_diaCU_btn_call}" />			
+									<f:ajax render="@form callDetails" execute="@form"/>			
+								</h:commandLink>
+								<h:commandLink style="margin-left:5px"
+									styleClass="btn btn-default">							
+									<f:ajax render="@form" execute="@this"
+										onevent="function(data){if(data.status==='success') $('#updateCallDialog').modal('hide');}"/>							
+									<i class="fa fa-times" />	
+									<h:outputText value=" #{lang.sc_diaCU_btn_close}"/>
+									<f:actionListener type="org.omnifaces.eventlistener.ResetInputAjaxActionListener" />	
+								</h:commandLink>
+								<h:panelGroup id="onsuccess">
+								    <h:outputScript rendered="#{facesContext.postback and not facesContext.validationFailed}">
+								        $('#updateCallDialog').modal('hide');
+								    </h:outputScript>
+								</h:panelGroup>
+					      	</div>
+						</div>
+					</div>
+				</h:form>
+			</div>				
+		</ui:define>
+	</ui:composition>
+</html>

@@ -1,0 +1,51 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:a="http://xmlns.jcp.org/jsf/passthrough"
+      xmlns:fields="http://xmlns.jcp.org/jsf/composite/fields"
+      xmlns:jsf="http://xmlns.jcp.org/jsf"
+      xmlns:p="http://primefaces.org/ui">
+	<ui:composition template="/resources/templates/commonLayout.xhtml">
+		<ui:define name="content">
+			<legend>#{lang.domainL_pageTitle}</legend>
+			<h:form id="domainsList">
+				<div id="adminControls" jsf:rendered="#{usersBean.isAdminUser()}">
+					<h:link outcome="domainSkip" 
+						styleClass="btn btn-primary" style="margin-left:5px">
+						<i class="fa fa-phone" />
+						<h:outputText value=" #{lang.domainL_btn_newDomainSkip}"/>
+						<f:param name="pageFrom" value="#{view.viewId}" />		
+					</h:link>
+				  	<h:commandLink action="#{domainBean.toggleSelectedDomains()}"
+						styleClass="btn btn-primary" style="margin-left:5px">
+						<i class="fa fa-envelope" />
+						<h:outputText value=" #{lang.domainL_btn_domainToggle}"/>
+					</h:commandLink>
+				</div>
+				<br /><br />
+				<!-- LIST OF ALL DOMAINS -->
+				<h:dataTable value="#{domainBean.allDomains}" var="domain" styleClass="table table-striped table-bordered"
+				columnClasses="colDS1,colDS2,colDS3,colDS4">
+					<h:column>
+						 <h:selectBooleanCheckbox value="#{domainBean.checked[domain.id]}"  class="big-checkbox" />
+					</h:column>
+					<h:column>
+						<f:facet name="header">#{lang.domainL_tbl_col_active}</f:facet>
+						<h:outputText escape="false" value="#{domainBean.getActiveStatus(domain)}" />	
+					</h:column>	
+					<h:column>
+						<f:facet name="header">#{lang.domainL_tbl_col_name}</f:facet>
+						<h:link value="#{domain.domainName}" outcome="domainSkip?i=#{domain.id}">
+							<f:param name="pageFrom" value="#{view.viewId}" />
+						</h:link>		
+					</h:column>
+					<h:column> 
+						<f:facet name="header">#{lang.domainL_tbl_col_comments}</f:facet>
+						<h:outputText value="#{domain.comments}" />			
+					</h:column>	
+				</h:dataTable>
+			</h:form>				
+		</ui:define>
+	</ui:composition>
+</html>

@@ -1,0 +1,441 @@
+<html lang="en" 
+	xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ui="http://java.sun.com/jsf/facelets"
+    xmlns:f="http://java.sun.com/jsf/core"
+    xmlns:h="http://java.sun.com/jsf/html"
+    xmlns:a="http://xmlns.jcp.org/jsf/passthrough"
+    xmlns:c="http://java.sun.com/jsf/core"
+    xmlns:jsf="http://xmlns.jcp.org/jsf"
+    xmlns:fields="http://xmlns.jcp.org/jsf/composite/fields"
+    xmlns:p="http://primefaces.org/ui">
+    <f:metadata>
+	   	<f:viewParam name="pageFrom" value="#{navigatorBean.pageFrom}" />
+	</f:metadata>
+	<ui:composition template="/resources/templates/commonLayout.xhtml">
+		<ui:define name="content">
+			<h:form id="compDetails">		
+				<ui:param name="comp" value="#{companyBean.company}" />	
+				<span style="display:none"><!-- REQUIRED TO INITIALISE THE COMPANY OBJECT --><h:outputText value="#{comp.id}" /></span>
+				<legend>#{lang.comp_pageTitle}</legend>
+				<fieldset>
+					<!-- CLOSE -->
+					<h:link styleClass="btn btn-danger" outcome="#{navigatorBean.pageFrom}">
+						<i class="fa fa-caret-left" />
+						<h:outputText value=" #{lang.comp_btn_close}" /> 
+					</h:link>
+					<!-- EDIT -->
+					<h:commandLink action="#{companyBean.edit}"
+						style="margin-left:5px"
+						styleClass="btn btn-primary"
+						rendered="#{companyBean.isEditable() and !companyBean.editMode}">
+						<i class="fa fa-pencil-square-o" />
+						<h:outputText value=" #{lang.comp_btn_edit}"/>
+						<f:ajax render="compDetails" execute="@this" />
+					</h:commandLink>
+					<!-- SAVE -->
+					<h:commandLink action="#{companyBean.saveCompany(false)}"
+						rendered="#{companyBean.editMode}" style="margin-left:5px"
+						styleClass="btn btn-primary">
+						<i class="fa fa-floppy-o" />
+						<h:outputText value=" #{lang.comp_btn_save}"/>
+						<f:ajax render="compDetails" execute="@form" />
+					</h:commandLink>
+					<!-- SAVE & CLOSE -->
+					<h:commandLink action="#{companyBean.saveCompany(true)}"
+						rendered="#{companyBean.editMode}"
+						style="margin-left:5px"
+						styleClass="btn btn-primary">
+						<i class="fa fa-floppy-o" />
+						<h:outputText value=" #{lang.comp_btn_saveClose}" />
+					</h:commandLink>
+					<!--  NEW CONTACT -->
+					<h:commandLink action="#{companyBean.openUserDialog(null)}" value="#{lang.comp_btn_newUser}" 
+						styleClass="btn btn-primary" style="margin-left:5px" rendered="#{companyBean.editMode and !companyBean.new}">
+						<f:ajax render="newUserForm" execute="newUserForm"
+						onevent="function(data){if(data.status==='success') $('#newUserDialog').modal({backdrop: 'static', keyboard: false});}" />
+						<f:actionListener type="org.omnifaces.eventlistener.ResetInputAjaxActionListener" />
+					</h:commandLink>
+				</fieldset>
+				<hr />
+				<div class="row">
+					<!-- COMPANY NAME -->
+					<div class="col-sm-3 col-lg-3">
+						<div class="form-group">
+							<fields:inputText value="#{comp.companyName}" label="#{lang.comp_lbl_companyName}: " 
+								editMode="#{companyBean.editMode}"	
+								fieldId="companyName" fieldBinding="#{companyName}" required="true" />
+						</div>
+					</div>
+					<!-- COMPANY CODE --> 
+					<div class="col-sm-3 col-lg-3">
+						<div class="form-group">
+							<fields:inputText value="#{comp.companyCode}" label="#{lang.comp_lbl_companyCode}: " 
+								editMode="#{companyBean.editMode}"	
+								fieldId="companyCode" fieldBinding="#{companyCode}" required="true" />
+						</div>
+					</div>
+					<!-- TYPE OF SUPPORT -->
+					<div class="col-sm-3 col-lg-3">
+						<div class="form-group">
+							<fields:inputSelectOneMenu 
+								value="#{comp.typeOfSupport}" 
+								readModeValue="#{lang[comp.typeOfSupport]}"
+								defaultValue="#{lang['comp_list_supportType_default']}"
+								label="#{lang.comp_lbl_typeOfSupport}:" 
+								fieldId="typeOfSupport" 
+								fieldBinding="#{typeOfSupport}"
+								required="true"		
+								converter="#{StringConverter}" 
+								editMode="#{companyBean.editMode}"	
+								selectList="#{companyBean.supportTypeList}" 
+								ajaxDisabled="false"
+								ajaxRender="#{creditsAdd.clientId}"
+								ajaxExecute="@this"
+								ajaxListener="#{companyBean.changeSupportType()}" />
+						</div>
+					</div>
+					<!-- DATE CREATED -->
+					<div class="col-sm-3 col-lg-3">
+						<div class="form-group">
+							<h:outputLabel styleClass="control-label small" for="dateCreated" value="#{lang.comp_lbl_dateCreated}:" />
+							<h:panelGroup>
+								<p class="form-control-static small">
+									<h:outputText id="dateCreated" value="#{comp.dateCreated}">
+										<f:convertDateTime pattern="dd MMM yyyy" timezone="GMT"/>
+									</h:outputText>
+								</p>			
+							</h:panelGroup>			
+						</div>
+					</div>
+				</div>
+				
+				<h:panelGroup id="creditsAdd" binding="#{creditsAdd}">
+					<div class="row" jsf:rendered="#{comp.typeOfSupport=='supportType_credit'}">
+						<!-- CREDITS -->
+						<div class="col-sm-3 col-lg-3">
+							<div class="form-group">
+								<h:outputLabel styleClass="control-label small" for="credits" value="#{lang.comp_lbl_credits}:"/>
+								<h:panelGroup rendered="#{companyBean.editMode}">
+									<p class="form-control-static small">
+										<h:outputText id="credits" value="#{comp.credits}" styleClass="form-control" style="display:inline;padding-bottom:10px"/>
+										<h:commandLink styleClass="btn btn-primary" style="margin-left:5px">
+											<f:ajax render="addCreditForm" execute="addCreditForm"
+											onevent="function(data){if(data.status==='success') $('#creditAddDialog').modal({backdrop: 'static', keyboard: false});}" />
+											<i class="fa fa-plus" />
+											<h:outputText value=" #{lang.comp_btn_addCredit}"/>
+										</h:commandLink>
+									</p>
+								</h:panelGroup>		
+								<h:panelGroup rendered="#{!companyBean.editMode}">
+									<p class="form-control-static small">
+										<h:outputText value="#{comp.credits}" />
+									</p>			
+								</h:panelGroup>		
+							</div>
+						</div>
+						<div class="col-sm-9 col-lg-9">
+							<h:panelGroup>
+								<h:dataTable value="#{comp.creditHistory}"
+									var="history" headerClass="small"
+									styleClass="table table-borderless table-condensed">
+									<f:facet name="header">
+										<h:outputText value="#{lang.comp_lbl_history} "></h:outputText>
+									</f:facet>
+									<h:column>							
+										<h:outputText value="#{history.detail}" styleClass="small"/>
+									</h:column>
+								</h:dataTable>
+							</h:panelGroup>					
+						</div>
+					</div>
+				</h:panelGroup>
+				
+				<!-- LIST OF ASSOCIATED USER ACCOUNTS  -->
+				<h:panelGroup id="contactDetailsTable" >
+					<legend style="font-size:large">#{lang.comp_subPageTitle1}</legend>
+					<h:dataTable var="cUser" value="#{comp.companyUsers}" headerClass="small"
+						styleClass="table table-striped table-bordered" columnClasses="compUserCol1,compUserCol2,CompUserCol3">
+						<h:column>
+							<f:facet name="header">#{lang.comp_tbl_col_userName}</f:facet>						
+							<h:commandLink action="#{companyBean.openUserDialog(cUser)}" value="#{cUser.user.userName}">
+								<f:ajax render="showUserForm" execute="showUserForm"
+									onevent="function(data){if(data.status==='success') $('#showUserDialog').modal({backdrop: 'static', keyboard: false});}"/>
+							</h:commandLink>										
+						</h:column>
+						<h:column>
+							<f:facet name="header">#{lang.comp_tbl_col_email}</f:facet>
+							#{cUser.user.email}
+						</h:column>
+						<f:facet name="header"></f:facet>
+						<h:column rendered="#{companyBean.editMode and usersBean.isAdminUser()}">
+							<h:commandLink action="#{companyBean.openUserDialog(cUser)}" title="#{lang.comp_tbl_col_removeUser}">
+								<i class="fa fa-times fa-lg" style="color:red"></i>
+								<f:ajax render="deleteUserForm" execute="deleteUserForm"
+								onevent="function(data){if(data.status==='success') $('#deleteUserDialog').modal({backdrop: 'static', keyboard: false});}" />			
+							</h:commandLink>							
+						</h:column>		
+					</h:dataTable>
+				</h:panelGroup>
+				
+				<!-- LIST OF ASSOCIATED SUPPORT CALLS -->
+				<legend style="font-size:large">#{lang.comp_subPageTitle2}</legend>
+				<p:dataTable value="#{companyBean.companySupportCalls}" var="call" styleClass="table table-striped table-bordered" widgetVar="callsTable"
+					columnClasses="dataTableColPad,dataTableColPad,dataTableColPad,dataTableColPad" filteredValue="#{companyBean.filteredCalls}"
+					rows="5" paginator="true" paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+					resizableColumns="true" >			
+					<f:facet name="header">
+			            <p:outputPanel style="text-align:right">
+			                <h:outputText value="#{lang.scL_searchField}: " />
+			                <p:inputText id="globalFilter" onkeyup="PF('callsTable').filter()" style="width:300px" placeholder="#{lang.scL_searchKeyword}"/>
+			            </p:outputPanel>
+		       		</f:facet>  
+					<p:column headerText="#{lang.comp_tbl_col_callRef}"  sortBy="#{call.callRefs}" filterMatchMode="contains" filterBy="#{call.callRefs}" filterStyle="display:none">	
+						<h:link value="#{call.callRefs}" outcome="supportCall?i=#{call.id}" style="color:#337ab7">
+							<f:param name="pageFrom" value="#{view.viewId}"/>
+						</h:link>
+					</p:column>
+					<p:column headerText="#{lang.comp_tbl_col_subject}" sortBy="#{call.subject}" filterBy="#{call.subject}" filterStyle="display:none">
+						<h:outputText value="#{call.subject}" />			
+					</p:column>
+					<p:column headerText="#{lang.comp_tbl_col_contact}" sortBy="#{call.companyUser.user.userName}" filterBy="#{call.companyUser.user.userName}" filterStyle="display:none">
+						<h:outputText value="#{call.companyUser.user.userName}" />			
+					</p:column>		
+					<p:column headerText="#{lang.comp_tbl_col_dateCreated}" sortBy="#{call.dateCreated}" filterBy="#{call.dateCreated}" filterStyle="display:none">
+						<h:outputText value="#{call.dateCreated}">
+							<f:convertDateTime pattern="dd MMM yyyy" timezone="GMT"/>
+						</h:outputText>		
+					</p:column>	
+					<p:column filterBy="#{call.status}" filterMatchMode="in">
+						<f:facet name="filter">    
+			                 <p:selectCheckboxMenu label="#{lang.comp_tbl_col_status}" onchange="PF('callsTable').filter()" panelStyle="width:200px" scrollHeight="200">
+			                      <f:selectItems value="#{supportCallBean.statusList}" var="obj" itemLabel="#{lang[obj]}" itemValue="#{obj}" />
+			                </p:selectCheckboxMenu>
+						</f:facet>
+						<h:outputText value="#{lang[call.status]}" />	
+					</p:column>				
+				</p:dataTable>
+			</h:form>
+			
+			<!-- =========================================  DELETE USER CONFORMATION CALL ========================================= -->
+			<div class="modal" role="dialog" id="deleteUserDialog">
+				<h:form id="deleteUserForm">	
+					<div class="modal-dialog dialog-lg">							
+						<div class="modal-content">
+							<div class="modal-header">
+								<button type="button" class="close" data-dismiss="modal"><i class="fa fa-times" /></button>
+								<h4 class="modal-title">#{lang.comp_diaDU_title}</h4>
+							</div>
+							<div class="modal-body">		      
+								<div class="row">
+									<div class="col-xs-12">		
+									 	<p>#{lang.comp_diaDU_desc}</p> 
+									</div>
+								</div>							
+							</div>	
+							<div class="modal-footer">
+						      	<h:commandLink action="#{companyBean.removeCompanyUser}" 
+									style="margin-left:5px" styleClass="btn btn-primary">							
+									<f:ajax render="@form compDetails onsuccess" execute="@form" />			
+									<i class="fa fa-check" /><h:outputText value=" #{lang.comp_diaDU_btn_del}" />	
+								</h:commandLink>
+								<h:commandLink style="margin-left:5px"
+									styleClass="btn btn-default">							
+									<f:ajax render="@form" execute="@form"
+										onevent="function(data){if(data.status==='success') $('#deleteUserDialog').modal('hide');}"/>							
+									<i class="fa fa-times" /><h:outputText value=" #{lang.comp_diaDU_btn_cancel}"/>					
+								</h:commandLink>
+								<h:panelGroup id="onsuccess">
+								    <h:outputScript rendered="#{facesContext.postback and not facesContext.validationFailed}">
+								        $('#deleteUserDialog').modal('hide');
+								    </h:outputScript>
+								</h:panelGroup>
+					      	</div>
+						</div>
+					</div>
+				</h:form>
+			</div>
+			<!-- ========================================= ADD CREDIT DIALOG BOX ========================================= -->
+			<div class="modal" role="dialog" id="creditAddDialog">
+				<h:form id="addCreditForm">	
+					<div class="modal-dialog dialog-lg">									
+						<div class="modal-content">
+							<div class="modal-header">
+								<button type="button" class="close" data-dismiss="modal"><i class="fa fa-times" /></button>
+								<h4 class="modal-title">#{lang.comp_diaAC_title}</h4>
+							</div>
+							<div class="modal-body">
+								<div class="row">
+									<div class="col-xs-12">			
+										<fields:inputNumber value="#{companyBean.creditsToAdd}" 
+											label="#{lang.comp_diaAC_desc}: " 
+											editMode="#{true}"	
+											fieldId="creditsToAdd" fieldBinding="#{creditsToAdd}" required="true" />
+									</div>
+								</div>
+							</div>
+							<div class="modal-footer">
+								<h:commandLink action="#{companyBean.addCredits}"
+									style="margin-left:5px"
+									styleClass="btn btn-primary">
+									<f:ajax  render="@form compDetails:creditsAdd onsuccess" execute="@form" />
+									<i class="fa fa-plus" />
+									<h:outputText value=" #{lang.comp_diaAC_btn_add}"/>
+								</h:commandLink>
+								<h:commandLink action="#{companyBean.closeCredits}"
+									style="margin-left:5px"
+									styleClass="btn btn-default">
+									<f:ajax render="compDetails addCreditForm" execute="@this"
+										onevent="function(data){if(data.status==='success') $('#creditAddDialog').modal('hide');}"/>							
+									<i class="fa fa-times" />
+									<h:outputText value=" #{lang.comp_diaAC_btn_cancel}"/>
+								</h:commandLink>
+								<h:panelGroup id="onsuccess">
+								    <h:outputScript rendered="#{facesContext.postback and not facesContext.validationFailed}">
+								        $('#creditAddDialog').modal('hide');
+								    </h:outputScript>
+								</h:panelGroup>
+							</div>
+						</div>
+					</div>
+				</h:form>
+			</div>
+			
+			<!-- ========================================= ASSOICATE ACCOUNT WITH COMPANY ========================================= -->
+			<ui:param name="compUser" value="#{companyBean.companyUser}" />	
+			<div class="modal" role="dialog" id="newUserDialog">
+				<h:form id="newUserForm">	
+					<div class="modal-dialog dialog-lg">							
+						<div class="modal-content">
+							<div class="modal-header">
+								<button type="button" class="close" data-dismiss="modal"><i class="fa fa-times" /></button>
+								<h4 class="modal-title">#{lang.comp_diaNU_title}: <h:outputText value="#{comp.companyName}" /></h4>
+							</div>
+							<div class="modal-body">		      
+								<div class="row">
+									<div class="col-xs-12">
+										<div class="form-group">
+											<h:panelGroup class="form-control-static small">	
+												<fields:inputSelectOneMenu 
+													label="#{lang.comp_diaNU_desc}:" 
+													fieldId="newCompanyContact" 
+													value="#{companyBean.newCompanyContact}" 
+													fieldBinding="#{newCompanyContact}"
+													editMode="#{companyBean.editMode}"	
+													readModeValue="#{companyBean.newCompanyContact}"
+													converter="#{userConverter}" 
+													required="true"
+													defaultValue="#{lang['comp_list_newUser_default']}"
+													selectList="#{usersBean.allUsers}" 
+													itemLabel="userName"
+													ajaxDisabled="true" />
+											</h:panelGroup>
+										</div>				
+									</div>
+								</div>							
+							</div>	
+							<div class="modal-footer">
+						      	<h:commandLink action="#{companyBean.addUser}" 
+									style="margin-left:5px" styleClass="btn btn-primary">							
+									<f:ajax render="@form compDetails:contactDetailsTable onsuccess" execute="@form" />			
+									<i class="fa fa-plus" /><h:outputText value=" #{lang.comp_diaNU_btn_add}" />	
+								</h:commandLink>
+								<h:commandLink style="margin-left:5px"
+									styleClass="btn btn-default">							
+									<f:ajax render="@form" execute="@this"
+										onevent="function(data){if(data.status==='success') $('#newUserDialog').modal('hide');}"/>							
+									<i class="fa fa-times" />						
+									<h:outputText value=" #{lang.comp_diaNU_btn_close}"/>		 
+									<f:actionListener type="org.omnifaces.eventlistener.ResetInputAjaxActionListener" />			
+								</h:commandLink>
+								<h:panelGroup id="onsuccess">
+								    <h:outputScript rendered="#{facesContext.postback and not facesContext.validationFailed}">
+								        $('#newUserDialog').modal('hide');
+								    </h:outputScript>
+								</h:panelGroup>
+					      	</div>
+						</div>
+					</div>
+				</h:form>	
+			</div>
+			
+			<!-- ========================================= SHOW USER DIALOG ========================================= -->
+			<div class="modal" role="dialog" id="showUserDialog">
+				<h:form id="showUserForm">	
+					<div class="modal-dialog dialog-lg">							
+						<div class="modal-content">
+							<div class="modal-header">
+								<button type="button" class="close" data-dismiss="modal"><i class="fa fa-times" /></button>
+								<h4 class="modal-title">#{lang.comp_diaSU_title}: <h:outputText value="#{comp.companyName}" /></h4>
+							</div>
+							<div class="modal-body">		      
+								<div class="row">
+									<div class="col-xs-4">
+										<div class="form-group">
+											<h:outputLabel styleClass="control-label small" value="#{lang.comp_diaSU_lbl_userName}:" />	
+										<!-- <h:panelGroup>
+												<p class="form-control-static small">
+													<h:inputText id="userName" value="#{companyBean.companyUser.user.userName}" styleClass="form-control input-sm"  />
+												</p>
+											</h:panelGroup> 
+										-->
+											<h:panelGroup>
+												<p class="form-control-static small">
+													<h:outputText value="#{companyBean.companyUser.user.userName}" />
+												</p>			
+											</h:panelGroup>
+										</div>				
+									</div>
+									<div class="col-xs-4">
+										<div class="form-group">
+											<h:outputLabel styleClass="control-label small" value="#{lang.comp_diaSU_lbl_email}:" />	
+										<!--<h:panelGroup>
+												<p class="form-control-static small">
+													<h:inputText id="email" value="#{companyBean.companyUser.user.email}" styleClass="form-control input-sm"  />
+												</p>
+											</h:panelGroup>
+										-->
+											<h:panelGroup>
+												<p class="form-control-static small">
+													<h:outputText value="#{companyBean.companyUser.user.email}" />
+												</p>			
+											</h:panelGroup>
+										</div>													
+									</div>
+									<div class="col-xs-4">
+										<div class="form-group">
+											<h:outputLabel styleClass="control-label small" value="#{lang.comp_diaSU_lbl_role}:" />	
+										<!-- <h:panelGroup>
+												<p class="form-control-static small">
+													<h:inputText id="role" value="#{companyBean.companyUser.user.role}" styleClass="form-control input-sm"  />
+												</p>
+											</h:panelGroup>
+										-->
+											<h:panelGroup>
+												<p class="form-control-static small">
+													<h:outputText value="#{companyBean.companyUser.user.role}" />
+												</p>			
+											</h:panelGroup>
+										</div>													
+									</div>
+								</div>							
+							</div>	
+							<div class="modal-footer">
+								<h:commandLink style="margin-left:5px" styleClass="btn btn-default">							
+									<f:ajax execute="@form" render="@form"
+										onevent="function(data){if(data.status==='success') $('#newUserDialog').modal('hide');}"/>							
+									<i class="fa fa-times" />						
+									<h:outputText value=" Close"/>					
+								</h:commandLink>
+								<h:panelGroup id="onsuccess">
+								    <h:outputScript rendered="#{facesContext.postback and not facesContext.validationFailed}">
+								        $('#showUserDialog').modal('hide');
+								    </h:outputScript>
+								</h:panelGroup>
+					      	</div>
+						</div>
+					</div>
+				</h:form>	
+			</div>	
+		</ui:define>
+	</ui:composition>
+</html>

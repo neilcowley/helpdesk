@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"   
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:jsf="http://xmlns.jcp.org/jsf"
+      xmlns:p="http://primefaces.org/ui">
+	<h:head>
+		<!-- <link href="./resources/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css" />  
+		<link href="./resources/lib/bootstrap/css/bootstrap-datetimepicker.css" rel="stylesheet" type="text/css" />
+		<link href="./resources/lib/fontawesome/css/xxfont-awesome.min.css" rel="stylesheet" type="text/css" />
+		<link href="./resources/css/styles.css" rel="stylesheet" type="text/css" /> 	
+		<f:loadBundle var="lang" basename="com.baytouch.helpdesk.language.select" />
+		-->
+		<h:outputStylesheet library="lib" name="bootstrap/css/bootstrap.min.css" />
+		<h:outputStylesheet library="lib" name="bootstrap/css/bootstrap-datetimepicker.css" />
+		<h:outputStylesheet library="lib" name="fontawesome/css/font-awesome.css" />	
+		<h:outputStylesheet library="css" name="styles.css" />	
+    </h:head>
+    <h:body>
+    	<f:view locale="#{globalsBean.locale}"/>
+		<div id="page">
+		    <div id="header">
+				<nav class="navbar  navbar-custom navbar-fixed-top" role="navigation">
+					<div class="container-fluid">
+						<!-- Brand and toggle get grouped for better mobile display -->						
+						<div class="navbar-header">
+							<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+								<span class="sr-only"></span>
+								<span class="icon-bar"></span>
+								<span class="icon-bar"></span>
+								<span class="icon-bar"></span>
+							</button>
+							<h:link outcome="home" class="navbar-brand" style="padding:5px" >    
+								<img src="./resources/images/bir.gif" border="0" style="display:inline" /> #{lang.nav_titleDb}
+							</h:link>
+					 	</div>
+					 	<!-- REMAINING NAVIGATOR LINKS -->
+					 	<div id="navbar" class="collapse navbar-collapse">
+					    	<ul class="nav navbar-nav" jsf:rendered="#{usersBean.isAdminUser()}"> 
+					    		<!-- 
+					    		<li class="dropdown">
+					    			<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" 
+					    			 	aria-haspopup="true" aria-expanded="false">
+					    			 	<i class="fa fa-building-o" /> Companies &amp; Users <span class="caret" />    			 	
+					    			</a>
+				    				<ul class="dropdown-menu">
+							    	    <li class="#{(thisPage=='allCompanies')?'active':''}">
+								        	<h:link  outcome="allCompanies">All Companies</h:link>
+							        	</li> 		
+					    			</ul>
+					    		</li>
+					    		-->
+					    		<li class="dropdown">
+					    			<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Options <span class="caret"></span></a>
+					    			<ul class="dropdown-menu">
+							    		 <li class="#{(thisPage=='allCompanies')?'active':''}">
+								        	<h:link  outcome="allCompanies"><i class="fa fa-building-o" /> #{lang.nav_link_companies}</h:link>
+							        	</li> 
+							        	<li class="#{(thisPage=='domains')?'active':''}">
+								        	<h:link  outcome="domains"><i class="fa fa-globe" /> #{lang.nav_link_domainSkip}</h:link>
+							        	</li> 
+							        	 <li class="#{(thisPage=='allUsers')?'active':''}">
+								        	<h:link  outcome="allUsers"><i class="fa fa-users fa-fw" />  #{lang.nav_link_users}</h:link>
+							        	</li>
+							        	<li class="#{(thisPage=='reports')?'active':''}">
+							        		<h:link	outcome="reports"><i class="fa fa-area-chart" /> #{lang.scl_btn_reports}</h:link>
+							        	</li>
+							        </ul>
+					    		</li>
+					    		<li class="#{(thisPage=='allUsers')?'active':''}">
+						        	<h:link  outcome="ftSearch"><i class="fa fa-search" /> #{lang.nav_link_ftSearch}</h:link>
+					        	</li> 
+					      	</ul>
+					      	<h:form>
+						      	<ul class="nav navbar-nav navbar-right">
+						      		<li>
+							     	 	<h:commandLink action="#{globalsBean.setLocale('en')}" style="padding:2px;">
+											<img src="./resources/images/United-Kingdom-icon.png" style="width:40px"/>
+							     	 	</h:commandLink>
+							     	 </li>
+							     	 <li>
+							     	 	<h:commandLink action="#{globalsBean.setLocale('es')}" style="padding:2px;">	 
+											<img src="./resources/images/Spain-icon.png" style="width:40px"/>
+							     	 	</h:commandLink>
+							      	</li>
+									<li>
+										<h:link outcome="supportCall"><i class="fa fa-file-text-o" /> #{lang.nav_link_newSupportCall}</h:link>
+									</li>
+									<li>
+							      		<h:link outcome="/User?i=#{usersBean.loggedOnUser.id}"><i class="fa fa-user fa-fw" />#{usersBean.loggedOnUser.userName}</h:link>
+							      	</li>
+					    		  	<li>      		     		
+					      				<a href="#{request.contextPath}/logout"><i class="fa fa-sign-out fa-fw" />#{lang.nav_link_logout}</a>
+					      			</li>
+								</ul>
+							</h:form>					      	
+					    </div>
+					</div>
+				</nav><!-- /.navbar-collapse -->
+		    </div> <!-- //HEADER -->
+		    
+		    <div id="content"  style="padding-top:65px; padding-bottom:50px">
+		  	  <div class="container">
+					<div class="row">
+					  	<ui:insert name="content">
+							
+					   	</ui:insert>
+			   		</div>
+				</div>
+		    </div>
+			    
+		    <div id="footer" class="navbar navbar-default navbar-fixed-bottom ui-layout-south">
+				<div class="navbar-text">
+					<table>
+						<tbody>
+							<tr valign="bottom">
+								<td></td>
+								<td>© 2005-2016 Baytouch Ltd</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+		<!-- Placed at the end of the document so the pages load faster -->
+       	<!-- Bootstrap core JavaScript ================================================== 
+			<script src="./resources/lib/jquery/jquery-1.12.3.min.js"></script>
+			<script src="./resources/lib/bootstrap/js/bootstrap.min.js"></script>
+			<script src="./resources/js/jsScript.js"></script>
+			<h:outputScript library="lib" name="jquery/jquery-1.12.3.min.js" /> 
+	     -->
+		<h:outputScript library="primefaces" name="jquery/jquery.js" target="head" />
+		<h:outputScript library="primefaces" name="jquery/jquery-plugins.js" target="head" />
+		<h:outputScript library="lib" name="bootstrap/js/bootstrap.min.js" target="head"/>
+	   	<h:outputScript library="js" name="jsScript.js"/>	
+	    <!-- Bootstrap datetime picker ===================================================
+  			<script src="./resources/lib/bootstrap/js/moment.min.js"></script>
+	   		<script src="./resources/lib/bootstrap/js/bootstrap-datetimepicker-min.js"></script> 
+	    -->	
+	   	<h:outputScript library="lib" name="bootstrap/js/moment.min.js"/>
+		<h:outputScript library="lib" name="bootstrap/js/bootstrap-datetimepicker-min.js"/>
+
+    </h:body>
+</html>

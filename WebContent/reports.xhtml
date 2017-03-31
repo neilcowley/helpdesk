@@ -1,0 +1,27 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+xmlns:ui="http://java.sun.com/jsf/facelets"
+xmlns:h="http://java.sun.com/jsf/html"
+xmlns:jsf="http://xmlns.jcp.org/jsf"
+xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+	<ui:composition template="/resources/templates/commonLayout.xhtml">
+		<ui:define name="content">
+			<h:form>
+				<legend>#{lang.rp_pageTitle}</legend>
+				<div class="row">
+					<div class="col-sm-12 col-lg-12">
+						<p:chart type="bar" model="#{chartView.barModel}" style="height:300px"/>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-sm-6 col-lg-6">
+						<p:chart type="pie" model="#{chartView.pieModel}" style="width:500px;height:400px" />
+					</div>
+					<div class="col-sm-6 col-lg-6">
+						 <p:chart type="line" model="#{chartView.lineModel}" style="height:400px;"/> 
+					</div>
+				</div>
+			</h:form>
+		</ui:define>
+	</ui:composition>
+</html>

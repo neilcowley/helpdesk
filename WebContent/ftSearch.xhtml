@@ -1,0 +1,80 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+xmlns:ui="http://java.sun.com/jsf/facelets"
+xmlns:h="http://java.sun.com/jsf/html"
+xmlns:jsf="http://xmlns.jcp.org/jsf"
+xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+	<ui:composition template="/resources/templates/commonLayout.xhtml">
+		<ui:define name="content">
+			<h:form>
+				<legend>#{lang.fts_pageTitle} </legend>
+				<div id="adminControls" jsf:rendered="#{usersBean.isAdminUser()}">
+				  	<h:commandLink action="#{searchDao.loadIndex}"
+						styleClass="btn btn-primary" style="margin-left:5px">
+						<i class="fa fa-envelope" />
+						<h:outputText value=" Rebuild Index"/>
+					</h:commandLink>
+				</div>
+				<br /><br />
+				
+				<!-- rebuilds the index when page is first loaded. Not ideal once there are a number 
+				attachments contained in the database
+				<f:metadata>
+				    <f:event type="preRenderView" listener="#{searchDao.loadIndex}" />
+				</f:metadata>
+				 -->
+				 
+				 <h:outputText value="#{lang.scL_lbl_ftSearch}: " />			
+				<p:inputText value="#{searchDao.searchString}"></p:inputText>
+				<p:commandButton value="#{lang.fts_btn_search}" actionListener="#{searchDao.fullTextSearch}">
+					<f:ajax render="@all" execute="@all"></f:ajax>
+				</p:commandButton>
+				
+				<p:dataTable value="#{helpdeskBean.allCalls}" var="call" styleClass="table table-striped table-bordered" widgetVar="callsTable"
+					columnClasses="dataTableColPad,dataTableColPad,dataTableColPad,dataTableColPad" filteredValue="#{helpdeskBean.filteredCalls}"
+					rows="20" paginator="true" paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+					resizableColumns="true" >
+					
+					 <f:facet name="header">
+			            <p:outputPanel style="text-align:right" >
+			                <h:outputText value="#{lang.scL_searchField}: " />
+			                <p:inputText id="globalFilter" onkeyup="PF('callsTable').filter()" style="width:300px" placeholder="#{lang.scL_searchKeyword}"/>
+			            </p:outputPanel>
+			        </f:facet>
+					        
+					<p:column headerText="#{lang.scl_tbl_col_company}" sortBy="#{call.company.companyName}" filterBy="#{call.company.companyName}" filterStyle="display:none" >
+						<h:outputText value="#{call.company.companyName}" />	
+					</p:column>
+					<p:column headerText="#{lang.scl_tbl_col_sentBy}" sortBy="#{call.senderName}" filterBy="#{call.senderName}" filterStyle="display:none">
+						<h:outputText value="#{call.senderName}" />
+					</p:column>
+					<p:column headerText="#{lang.scl_tbl_col_callRefs}"  sortBy="#{call.callRefs}" filterMatchMode="contains" filterBy="#{call.callRefs}" filterStyle="display:none">	
+						<h:link value="#{call.callRefs}" outcome="supportCall?i=#{call.id}" style="color:#337ab7">
+							<f:param name="pageFrom" value="#{view.viewId}"/>
+						</h:link>
+					</p:column>
+					<p:column headerText="#{lang.scl_tbl_col_subject}" sortBy="#{call.subject}" filterBy="#{call.subject}" filterStyle="display:none">
+						<h:outputText value="#{call.subject}" />			
+					</p:column>
+					<p:column headerText="#{lang.scl_tbl_col_contact}" sortBy="#{call.companyUser.user.userName}" filterBy="#{call.companyUser.user.userName}" filterStyle="display:none">
+						<h:outputText value="#{call.companyUser.user.userName}" />			
+					</p:column>		
+					<p:column headerText="#{lang.scl_tbl_col_dateCreated}" sortBy="#{call.dateCreated}" filterBy="#{call.dateCreated}" filterStyle="display:none">
+						<h:outputText value="#{call.dateCreated}">
+							<f:convertDateTime pattern="dd MMM yyyy" timezone="GMT"/>
+						</h:outputText>		
+					</p:column>	
+					<p:column filterBy="#{call.status}" filterMatchMode="in">
+						<f:facet name="filter">    
+			                 <p:selectCheckboxMenu label="#{lang.scl_tbl_col_status}" onchange="PF('callsTable').filter()" panelStyle="width:200px" scrollHeight="200">
+			                     <!-- <f:selectItems value="#{supportCallBean.statusList}" />-->
+			                      <f:selectItems value="#{supportCallBean.statusList}" var="obj" itemLabel="#{lang[obj]}" itemValue="#{obj}" />
+			                </p:selectCheckboxMenu>
+						</f:facet>
+						<h:outputText value="#{lang[call.status]}" />	
+					</p:column>				
+				</p:dataTable>
+			</h:form>
+		</ui:define>
+	</ui:composition>
+</html>

@@ -1,0 +1,6 @@
+**/build
+src/config.properties
+SQLQueries-adminUsers.sql
+SQLQueries-helpdesk.sql
+setupAdminUsersDatabase.sql
+setupHelpdeskDatabase.sql

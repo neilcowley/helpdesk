@@ -1,0 +1,43 @@
+<html
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://xmlns.jcp.org/jsf/html"
+	xmlns:cc="http://xmlns.jcp.org/jsf/composite"
+	xmlns:jsf="http://xmlns.jcp.org/jsf"
+	xmlns:a="http://xmlns.jcp.org/jsf/passthrough">
+<cc:interface>
+	<cc:attribute name="value" required="true" />
+	<cc:attribute name="label" required="false" />
+	<cc:attribute name="fieldBinding" required="true" />
+	<cc:attribute name="fieldId" required="true" />
+	<cc:attribute name="placeholder" required="false" />
+	<cc:attribute name="required" required="false" default="#{false}"/>
+	<cc:attribute name="editMode" required="true" />
+</cc:interface>	
+<cc:implementation>	
+	<div class="form-group #{(cc.attrs.fieldBinding.valid)?'':'has-error'}">						
+		<h:outputLabel styleClass="control-label small" for="#{cc.attrs.fieldId}" value="#{cc.attrs.label}" 
+			rendered="#{!empty cc.attrs.label}"/>
+		<h:panelGroup rendered="#{cc.attrs.editMode}">
+			
+			<h:inputText styleClass="form-control input-sm #{(cc.attrs.fieldBinding.valid)?'':'alert-danger'}" 
+				id="#{cc.attrs.fieldId}"			
+				value="#{cc.attrs.value}"
+				binding="#{cc.attrs.fieldBinding}"
+				required="#{cc.attrs.required}"
+				requiredMessage=" #{lang.field_validate_required}" 
+				converterMessage=" #{lang.field_validate_number}"
+				a:placeholder="#{cc.attrs.placeholder}"/>
+				
+			<div class="text-danger" jsf:rendered="#{!cc.attrs.fieldBinding.valid}">
+				<i class="fa fa-times-circle" />
+				<h:message for="#{cc.attrs.fieldId}" errorClass="errorText"></h:message>
+			</div>
+		</h:panelGroup>
+		
+		<h:panelGroup rendered="#{!cc.attrs.editMode}">
+			<p class="form-control-static small"><h:outputText value="#{cc.attrs.value}"/></p>			
+		</h:panelGroup>
+		
+	</div>
+</cc:implementation>
+</html>

@@ -1,0 +1,53 @@
+<html
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://xmlns.jcp.org/jsf/html"
+	xmlns:cc="http://xmlns.jcp.org/jsf/composite"
+	xmlns:jsf="http://xmlns.jcp.org/jsf"
+	xmlns:a="http://xmlns.jcp.org/jsf/passthrough"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jsp/jstl/core"
+	xmlns:f="http://xmlns.jcp.org/jsf/core">
+<cc:interface>
+	<cc:attribute name="value" required="true" />
+	<cc:attribute name="label" required="false" />
+	<cc:attribute name="fieldBinding" required="true" />
+	<cc:attribute name="fieldId" required="true" />
+	<cc:attribute name="required" required="false" default="#{false}"/>
+	<cc:attribute name="disabled" required="true" />
+	<cc:attribute name="width" required="false" type="java.lang.Integer" />
+	<cc:attribute name="height" required="false" type="java.lang.Integer" />
+	<cc:attribute name="classStyle" required="false" />
+	<cc:attribute name="widgetVar" required="false" default="editorWidget" />
+</cc:interface>	
+<cc:implementation>	
+	<div class="form-group #{(cc.attrs.fieldBinding.valid)?'':'has-error'}">
+							
+		<h:outputLabel styleClass="control-label small" for="#{cc.attrs.fieldId}" value="#{cc.attrs.label}" 
+			rendered="#{!empty cc.attrs.label}"/>
+		<!-- style="background-color:#fff!important" -->
+		<h:panelGroup>
+		
+			<p:editor styleClass="#{(cc.attrs.fieldBinding.valid)?'':'alert-danger'} #{cc.attrs.classStyle}" 
+				disabled="#{cc.attrs.disabled}"
+				id="#{cc.attrs.fieldId}"			
+				value="#{cc.attrs.value}"
+				binding="#{cc.attrs.fieldBinding}"
+				required="#{cc.attrs.required}"
+				requiredMessage=" #{lang.field_validate_required}"  
+				widgetVar="editorWidget">
+				<c:if test="#{not empty cc.attrs.width}">
+					<f:attribute name="width" value="#{cc.attrs.width}" />
+				</c:if>
+				<c:if test="#{not empty cc.attrs.height}">
+					<f:attribute name="height" value="#{cc.attrs.height}" />
+				</c:if>
+			</p:editor>
+
+			<div class="text-danger" jsf:rendered="#{!cc.attrs.fieldBinding.valid}">
+				<i class="fa fa-times-circle" />
+				<h:message for="#{cc.attrs.fieldId}" errorClass="errorText"></h:message>
+			</div>
+		</h:panelGroup>		
+	</div>
+</cc:implementation>
+</html>

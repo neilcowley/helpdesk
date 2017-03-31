@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:c="http://java.sun.com/jstl/core"
+    xmlns:h="http://xmlns.jcp.org/jsf/html">
+<h:head>
+	<title>Please log-in</title>
+	<link href="./resources/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+	<link href="./resources/lib/fontawesome/css/font-awesome.min.css" rel="stylesheet" type="text/css" /> 
+</h:head>
+<h:body>    
+    <!-- <form method="post" action="login" style="padding-top:85px"> -->
+    <h:form id="loginForm" onsubmit="document.loginForm.action = 'j_security_check';"
+    	style="padding-top:85px">  
+        <div class="container">
+		    <div class="panel panel-primary">
+		    	<div class="panel-heading">Please log-in</div>
+		    	<div class="panel-body">		    		
+		    		<div class="form-horizontal">
+		    			<c:if test="${param.status=='error'}">
+			    			<div class="form-group">
+			    				<div class="col-sm-12">
+			    					<div class="alert alert-danger" role="alert">
+			    						<i class="fa fa-times-circle fa-lg fa-fw" />Invalid username or password.
+			    					</div>
+			    				</div>
+			    			</div>
+		    			</c:if>
+		    			<div class="form-group">
+		    				<label for="j_username" class="col-sm-2 control-label">Email Address:</label>
+		    				<div class="col-sm-10">
+		    					<div class="input-group">
+			          				<span class="input-group-addon">
+			          					<i class="fa fa-user fa-fw"></i>
+			          				</span>
+			          				<input name="j_username" id="j_username" type="text" class="form-control bf-no-message bf-required" placeholder="Username"/>		          		
+			          			</div>
+		    				</div>
+		    			</div>
+		    			<div class="form-group">
+		    				<label for="j_password" class="col-sm-2 control-label">Password:</label>
+		    				<div class="col-sm-10">
+		    					<div class="input-group">
+		          					<span class="input-group-addon">
+		          						<i class="fa fa-key fa-fw"></i>
+		          					</span>
+		          					<input name="j_password" type="password" class="form-control bf-no-message" placeholder="Password"/>		          		
+		          				</div>
+		    				</div>
+		    			</div>
+		    			 <div class="form-group">
+    						<div class="col-sm-offset-2 col-sm-10">
+    							<button type="submit" class="btn btn-primary"><i class="fa fa-sign-in fa-fw fa-lg" /> Login</button>
+    						</div>
+    					</div>
+		    		</div>
+		    	</div>
+		    </div> 
+		   </div>
+ 		</h:form>	
+</h:body>
+</html>

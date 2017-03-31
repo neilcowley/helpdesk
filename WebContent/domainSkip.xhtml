@@ -1,0 +1,142 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:jsf="http://xmlns.jcp.org/jsf"
+      xmlns:fields="http://xmlns.jcp.org/jsf/composite/fields"
+      xmlns:p="http://primefaces.org/ui">
+    <f:metadata>
+		<f:viewParam name="pageFrom" value="#{navigatorBean.pageFrom}" />
+    </f:metadata>
+	<ui:composition template="/resources/templates/commonLayout.xhtml">
+		<ui:define name="content">
+			<h:form id="domainSkipForm">
+				<ui:param name="domain" value="#{domainBean.domain}" />
+				<span style="display:none"><!-- REQUIRED TO INITIALISE THE domainSkip OBJECT --><h:outputText value="#{domain.id}" /></span>
+				<legend>#{lang.domainSkip_pageTitle}</legend>
+				<div class="row">
+					<div class="col-sm-12">
+						<!-- Close -->
+						<h:link styleClass="btn btn-danger" outcome="#{navigatorBean.pageFrom}">
+							<i class="fa fa-caret-left fa-lg" />
+							<h:outputText value=" #{lang.domainSkip_btn_close}" />
+						</h:link>
+						<!-- EDIT -->
+						<h:commandLink action="#{domainBean.edit}"
+							style="margin-left:5px"
+							styleClass="btn btn-primary"
+							rendered="#{!domainBean.editMode}">
+							<i class="fa fa-pencil-square-o" />						
+							<h:outputText value=" #{lang.domainSkip_btn_edit}"/>
+							<f:ajax render="@all" execute="@this" />					
+						</h:commandLink>
+						<!-- SAVE -->	
+						<h:commandLink action="#{domainBean.saveDomain(false)}"
+							style="margin-left:5px"
+							styleClass="btn btn-primary"
+							rendered="#{domainBean.editMode}">
+							<i class="fa fa-floppy-o" />
+							<h:outputText value=" #{lang.domainSkip_btn_save}"/>
+							<f:ajax render="@all" execute="@form" />	
+						</h:commandLink>
+						<!-- SAVE AND CLOSE -->
+						<h:commandLink action="#{domainBean.saveDomain(true)}"
+							style="margin-left:5px"
+							styleClass="btn btn-primary"
+							rendered="#{domainBean.editMode}">
+							<i class="fa fa-floppy-o" />
+							<h:outputText value=" #{lang.domainSkip_btn_saveClose}" />
+							<f:ajax render="@all" execute="@form" />					
+						</h:commandLink>	
+						<!-- DELETE -->
+						<h:commandLink 
+							style="margin-left:5px" 
+							styleClass="btn btn-warning"
+							rendered="#{domainBean.editMode and !domainBean.new}">
+							<i class="fa fa-trash-o" />
+							<h:outputText value=" #{lang.domainSkip_btn_deleteDomain}"/>
+							<f:ajax render="deleteDomainForm" execute="deleteUserForm"
+							onevent="function(data){if(data.status==='success') $('#deleteDomainDialog').modal({backdrop: 'static', keyboard: false});}" />	
+						</h:commandLink>						
+					</div>
+				</div>
+				<hr />
+				<div class="row">
+					<div class="col-sm-5">						
+						<fields:inputText value="#{domain.domainName}" label="#{lang.domainSkip_lbl_domainName}: " 
+							editMode="#{domainBean.editMode}" disabled="false" styleClass="" 
+							fieldId="domainName" fieldBinding="#{domainName}" required="true" />							
+					</div>
+					<div class="col-sm-5">						
+						<fields:inputText value="#{domain.createdBy}" label="#{lang.domainSkip_lbl_createdBy}: " 
+							editMode="#{false}" disabled="false" styleClass=""
+							fieldId="createdBy" fieldBinding="#{createdBy}" required="true" />		
+					</div> 
+					<div class="col-sm-2">
+						<fields:inputBooleanCheckbox
+							value="#{domain.active}" 
+							readModeValue="#{domain.readDomainSkipActive()}"
+							editModeText="#{lang['user_admin_helpdesk_notification_yes']}"
+							label="#{lang.domainSkip_lbl_active}: "
+							fieldId="active" 
+							fieldBinding="#{active}"	
+							editMode="#{domainBean.editMode}" />				
+					</div> 
+				</div>
+				<div class="row">	
+					<div class="col-sm-12">				
+					 	<fields:inputText value="#{domain.comments}" label="#{lang.domainSkip_lbl_comments}: "
+							editMode="#{domainBean.editMode}" fieldId="comments" fieldBinding="#{comments}" required="true">	
+						</fields:inputText>
+							
+					</div>
+				</div>
+				<div class="row">	
+					<h:panelGroup  class="col-sm-12" rendered="#{!domainBean.new}" >		
+					 	<fields:inputText value="#{domain.history}" label="#{lang.domainSkip_lbl_history}: "
+							editMode="#{false}" fieldId="history" fieldBinding="#{history}" required="true">	
+						</fields:inputText>
+					</h:panelGroup>
+				</div>
+			</h:form>
+			<!-- =========================================  DELETE DOMAIN CONFORMATION CALL ========================================= -->
+			<div class="modal" role="dialog" id="deleteDomainDialog">
+				<h:form id="deleteDomainForm">	
+					<div class="modal-dialog dialog-lg">							
+						<div class="modal-content">
+							<div class="modal-header">
+								<button type="button" class="close" data-dismiss="modal"><i class="fa fa-times" /></button>
+								<h4 class="modal-title">#{lang.domainSkip_diaDU_title}</h4>
+							</div>
+							<div class="modal-body">		      
+								<div class="row">
+									<div class="col-xs-12">		
+									 	<p>#{lang.domainSkip_diaDU_desc}</p> 
+									</div>
+								</div>							
+							</div>	
+							<div class="modal-footer">
+						      	<h:commandLink action="#{domainBean.deleteDomain}" 
+									style="margin-left:5px" styleClass="btn btn-primary">							
+									<f:ajax render="@form domainSkipForm onsuccess" execute="@form" />			
+									<i class="fa fa-check" /><h:outputText value=" #{lang.domainSkip_diaDU_btn_del}" />	
+								</h:commandLink>
+								<h:commandLink style="margin-left:5px"
+									styleClass="btn btn-default">							
+									<f:ajax render="@form" execute="@form"
+										onevent="function(data){if(data.status==='success') $('#deleteDomainDialog').modal('hide');}"/>							
+									<i class="fa fa-times" /><h:outputText value=" #{lang.domainSkip_diaDU_btn_cancel}"/>					
+								</h:commandLink>
+								<h:panelGroup id="onsuccess">
+								    <h:outputScript rendered="#{facesContext.postback and not facesContext.validationFailed}">
+								        $('#deleteDomainDialog').modal('hide');
+								    </h:outputScript>
+								</h:panelGroup>
+					      	</div>
+						</div>
+					</div>
+				</h:form>
+			</div>
+		</ui:define>
+	</ui:composition>
+</html>

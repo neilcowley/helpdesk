@@ -1,0 +1,87 @@
+.navbar-custom {
+    background-color:#50687D;
+    color:#ffffff;
+    border-radius:0;
+}
+
+.navbar-custom .navbar-nav > li > a {
+    color:#fff;
+}
+.navbar-custom .navbar-nav > .active > a, .navbar-nav > .active > a:hover, .navbar-nav > .active > a:focus {
+    color: #fff;
+    background-color:transparent;
+}
+.navbar-custom .navbar-brand {
+    color:#eeeeee;
+}
+.navbar-custom .navbar-nav > li > a:hover, .nav > li > a:focus { 
+	text-decoration: none; 
+	color:#000;
+}
+
+.col1 {width:90px;vertical-align:top}
+.col2 {width:350px;vertical-align:top}
+.col3 {width:100px;vertical-align:top}
+.col4 {width:100px;vertical-align:top}
+.col5 {width: 100px;vertical-align:top;text-align: right}
+.col6 {vertical-align:top; text-align: right}
+
+.compUserCol1 {vertical-align:top}
+.compUserCol2 {vertical-align:top}
+.CompUserCol3 {width:40px;vertical-align:top}
+
+
+.inlineRadioButtons {
+	display:block;
+}
+
+.inlineRadioButtons td label {
+	font-weight:normal;
+    display: inline;
+    padding-right:10px!important;
+}
+
+.dataTableCheckBox {
+	max-width:20px; 
+}
+
+.dataTableColPad1 {width:60%;]
+.dataTableColPad1 {width:10%;}
+.dataTableColPad1 {width:14%;}
+.dataTableColPad1 {width:16%;}
+
+.emailSelect {
+	text-decoration:none !important;
+	color:#6F5499;
+	font-size:100%;
+	font-weight:bolder;
+	padding:8px 12px 9px 12px;
+	margin-right:2px;
+	border:solid #6F5499 1px;
+}
+
+.emailNotSelected {
+	background-color: #fff;
+}
+
+.emailSelected {
+	background-color: #6F5499;
+	color:#fff;
+}
+
+/* Primefaces overloaded styles */
+.hideToolbar .ui-editor-toolbar {
+   display: none;
+}
+
+.hideBoxBorder .ui-editor {
+	border:0px solid #fff;
+}
+
+/* DomainSkip classes */ 
+.big-checkbox {width: 18px; height: 18px}
+
+.colDS1 {width:5%;vertical-align:top}
+.colDS2 {width:5%;vertical-align:top}
+.colDS3 {width:30%;vertical-align:top}
+.colDS4 {width:60%;vertical-align:top}

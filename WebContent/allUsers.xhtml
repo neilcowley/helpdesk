@@ -1,0 +1,89 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:a="http://xmlns.jcp.org/jsf/passthrough"
+      xmlns:jsf="http://xmlns.jcp.org/jsf"
+      xmlns:p="http://primefaces.org/ui">
+	<ui:composition template="/resources/templates/commonLayout.xhtml">
+		<ui:define name="content">
+			<legend>#{lang.userL_pageTitle}</legend>
+			<h:form id="searchForm">
+				<!-- SEARCH FUNCTIONALITY -->
+				<div class="row">
+					<div class="form-horizontal">
+	  					<div class="form-group">
+							<div class="col-sm-12" style="margin-left:15px">
+								<h:inputText id="keyword" value="#{usersBean.keyword}" styleClass="form-control input-sm" style="width:20%;display:inline" />						
+								<h:commandLink id="search"	style="margin-left:5px"
+									styleClass="btn btn-primary">
+									<i class="fa fa-floppy-o" />
+									<h:outputText value=" #{lang.userL_btn_search}" />
+								</h:commandLink>
+								<!-- rendered="#{usersBean.isManager()}" -->
+								<h:link outcome="User" styleClass="btn btn-primary"
+									id="newUser"
+									style="margin-left:5px">
+									<i class="fa fa-user" /><h:outputText value=" #{lang.userL_btn_newUser}" />
+									<f:param name="pageFrom" value="#{view.viewId}" />
+								</h:link>
+							</div>		
+						</div>
+					</div>
+				</div>
+			</h:form>
+			
+			<!-- LIST OF ADMIN USERS -->
+			<legend>#{lang.userL_pageSubTitle1}</legend>
+			<h:form id="allAdminUsersList">
+				<h:dataTable value="#{usersBean.allAdminUsers}" var="admin"
+					styleClass="table table-striped table-bordered">			
+					<h:column>
+						<f:facet name="header">#{lang.userL_tbl_col_userName}</f:facet>
+						<h:panelGroup rendered="#{usersBean.isManager()}">
+							<h:link value="#{admin.userName}" outcome="/User?i=#{admin.id}" >
+								<f:param name="pageFrom" value="#{view.viewId}" />
+							</h:link>
+						</h:panelGroup>
+						<h:panelGroup rendered="#{!usersBean.isManager()}">
+							#{admin.userName}
+						</h:panelGroup>							
+					</h:column>
+					<h:column>
+						<f:facet name="header">#{lang.userL_tbl_col_email}</f:facet>
+						#{admin.email}
+					</h:column>		
+					<h:column>
+						<f:facet name="header">#{lang.userL_tbl_col_role}</f:facet>
+						#{lang[admin.role]}
+					</h:column>	
+					<h:column>
+						<f:facet name="header">#{lang.userL_tbl_col_HDNotify}</f:facet>
+						<h:outputText escape="false" value="#{admin.iconHelpdeskNotification()}" />
+					</h:column>			
+				</h:dataTable>
+			</h:form>
+			
+			<!-- LIST OF ALL USERS -->
+			<legend>#{lang.userL_pageSubTitle2}</legend>
+			<h:form id="allUsersList">
+				<p:dataTable value="#{usersBean.allUsers}" var="user" styleClass="table table-striped table-bordered"
+					rows="20" paginator="true" paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}">
+					
+					<p:column headerText="#{lang.userL_tbl_col_userName}"  sortBy="#{user.userName}" filterMatchMode="contains" filterBy="#{user.userName}" filterStyle="display:none">	
+						<h:link value="#{user.userName}" outcome="User?i=#{user.id}" style="color:#337ab7">
+							<f:param name="pageFrom" value="#{view.viewId}"/>
+						</h:link>
+					</p:column>		
+					<p:column headerText="#{lang.userL_tbl_col_email}" sortBy="#{user.email}" filterBy="#{user.email}" filterStyle="display:none">
+						<h:outputText value="#{user.email}" />			
+					</p:column>
+					<p:column headerText="#{lang.userL_tbl_col_role}" sortBy="#{user.role}" filterBy="#{user.role}" filterStyle="display:none">
+						<h:outputText value="#{lang[user.role]}" />			
+					</p:column>										
+				</p:dataTable>
+			</h:form>
+				
+		</ui:define>
+	</ui:composition>
+</html>
