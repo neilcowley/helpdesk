@@ -119,6 +119,23 @@
 							selectList="#{usersBean.roleList}" 
 							ajaxDisabled="true" />				
 					</div>
+					<div class="col-sm-6">		
+						<fields:inputSelectOneMenu 
+							value="#{user.language}" 
+							readModeValue="#{lang[user.language]}"
+							defaultValue="#{lang['user_list_language_default']}"
+							label="#{lang.user_tbl_col_language}:"  
+							fieldId="language" 
+							fieldBinding="#{language}"
+							required="true"		
+							converter="#{StringConverter}" 
+							editMode="#{usersBean.editMode and usersBean.isAdminUser()}"	
+							selectList="#{usersBean.languageList}" 
+							ajaxDisabled="true" />				
+					</div>
+				</div>
+				
+				<div class="row">
 					<h:panelGroup  class="col-sm-6" rendered="#{usersBean.isAdminUser() and user.role=='admin'}" >
 						<!-- 
 						<h:outputLabel styleClass="control-label small" for="helpDeskNotification" value="HelpDesk Notification?"/><br />

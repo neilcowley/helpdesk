@@ -39,6 +39,8 @@ public class UsersBean implements Serializable{
 	public static final String ARCHIVED = "archived";
 	private static final String PWCHANGE_YES = "Yes";
 	private static final String PWCHANGE_NO = "No";	
+	public static final String ENGLISH = "en";
+	public static final String SPANISH = "es";
 		
 	@PersistenceContext(unitName="helpdesk")
 	private EntityManager emHelp;
@@ -48,6 +50,8 @@ public class UsersBean implements Serializable{
 	UserDao udao;
 	@Inject
 	private NavigatorBean nb;
+	@Inject
+	private GlobalsBean gBean ; 
 	
 	private Integer userId;
 	private Account user;
@@ -58,6 +62,7 @@ public class UsersBean implements Serializable{
 	private String managerUserName;
 	private Account loggedOnUser;
 	private List<String> roleList = null;
+	private List<String> languageList = null;
 	private String passwordChange = PWCHANGE_NO;
 	private Boolean isAdminUser;
 	private boolean isNew = false;
@@ -71,6 +76,9 @@ public class UsersBean implements Serializable{
 		roleList.add(ADMIN);
 		roleList.add(USER);
 		roleList.add(ARCHIVED);
+		languageList = new ArrayList<String>();
+		languageList.add(ENGLISH);
+		languageList.add(SPANISH);
 //		pattern = Pattern.compile(EMAIL_PATTERN);
 	}
 			
@@ -94,6 +102,8 @@ public class UsersBean implements Serializable{
 		if(user == null){
 			if(userId == null){
 				user = new User();
+				String locale = gBean.getLocale(); 
+				user.setLanguage(locale.equals("")? ENGLISH : locale);
 				// user.setRole(USER);
 				passwordChange=PWCHANGE_YES;
 				isNew = true;
@@ -106,6 +116,16 @@ public class UsersBean implements Serializable{
 		}	
 		return user;		
 	}
+	
+	/**
+	 * 
+	 * @param curUser
+	public void setUser(Account curUser){
+		if(user == null){
+			user = curUser; 
+		}
+	}
+	
 	
 	/**
 	 * Returns a list of all Users or a list of users based on a keyword search
@@ -163,7 +183,15 @@ public class UsersBean implements Serializable{
 	public void setRoleList(List<String> roleList) {
 		this.roleList = roleList;
 	}
-		
+
+	public List<String> getLanguageList() {
+		return languageList;
+	}
+
+	public void setLanguageList(List<String> languageList) {
+		this.languageList = languageList;
+	}
+
 	public Integer getUserId() {
 		return userId;
 	}
@@ -181,121 +209,7 @@ public class UsersBean implements Serializable{
 		this.keyword = keyword;
 	}
 		
-	private String hashPassword(String password) throws NoSuchAlgorithmException, UnsupportedEncodingException {		
-		//http://stackoverflow.com/questions/3103652/hash-string-via-sha-256-in-java
-		MessageDigest md = MessageDigest.getInstance("SHA-256");	
-		md.update(password.getBytes("UTF-8")); // Change this to "UTF-16" if needed			
-		//http://stackoverflow.com/questions/19743851/base64-java-encode-and-decode-a-string
-		return Base64.getEncoder().encodeToString(md.digest());		 
-	}
-			
-	public String edit(){
-		setEditMode(true);
-		return null;
-	}
-		
-	@Transactional
-	public String saveUser(boolean isSaveAndClose) throws NoSuchAlgorithmException, UnsupportedEncodingException{	
-		
-		/*
-		if(newPassword != null && !newPassword.isEmpty() && confirmNewPassword!= null && !confirmNewPassword.isEmpty()){
-			if(newPassword.equals(confirmNewPassword)){
-				user.setPasswd(hashPassword(newPassword));
-			}else{								
-				setError("userForm:np:newPassword","Passwords must match");
-				setError("userForm:cnp:confirmNewPassword","Passwords must match");				
-				return null;
-			}			
-		}
-		*/
-		
-		if(isNew || passwordChange.equals(PWCHANGE_YES)){
-			user.setPasswd(hashPassword(newPassword));
-		}
 
-		if(user instanceof AdminUser){
-			user = emAdmin.merge(user);
-		}else{
-			user = emHelp.merge(user);	
-		}
-		
-		if(isSaveAndClose){
-			return nb.getPageFrom() + "?faces-redirect=true";
-		}else{
-			passwordChange=PWCHANGE_NO; 
-			isNew=false;
-			return null;
-		}
-	}
-		
-	private EntityManager getEntityManager(){
-		if(user instanceof AdminUser){
-			return emAdmin; 
-		}else{
-			return emHelp; 
-		}
-	}
-	
-	/**
-	 * Calculates if the person accessing the user document has the write to delete it.
-	 * @return
-	 */
-	public boolean dspDeleteButton(){
-		// usersBean.editMode and usersBean.isAdminUser()  and !usersBean.new and user.role!='ADMIN'
-		boolean rtnVal = false; 
-		Account curUser = getLoggedOnUser() ; 
-			
-		if(!isNew &&
-			editMode && 
-			isAdminUser() && 
-			curUser.getRole().equals(ADMIN) && 
-			!curUser.getEmail().equals(user.getEmail()) 
-		){
-			rtnVal = true; 
-		}
-					
-		return rtnVal ; 
-	}
-		
-	@Transactional
-	public String  deleteUser(){
-		// Get the associated entityManager 
-		EntityManager tmpEM = getEntityManager(); 
-		
-		// Check to see if the current user is associated with any companies..
-		if(user instanceof User){
-			
-			// System.out.println("Check to see for associated companyUsers");
-			List<CompanyUser> cuList = null ;
-			TypedQuery<CompanyUser> tq = emHelp.createNamedQuery("findCompanyUserByUserId",CompanyUser.class);
-			tq.setParameter("userId", user.getId());
-			cuList = tq.getResultList();
-			if(cuList.size()>0){
-				//System.out.println("Beginning loop around Company Users...");
-				for(CompanyUser cu : cuList){
-					//System.out.println("Removeing: " + cu.getId() + " - " + cu.getFullName() );
-					emHelp.remove(emHelp.contains(cu) ? cu : emHelp.merge(cu));
-				}
-			}
-		}
-		// Now remove the user from the database... 
-		tmpEM.remove(tmpEM.contains(user) ? user : tmpEM.merge(user));			
-		return nb.getPageFrom() + "?faces-redirect=true";
-	}
-			
-	/**
-	 * Returns the User object of the logged on user based on their email address log-on name.
-	 * @return
-	 */
-	@Transactional
-	public Account getLoggedOnUser(){
-		if(loggedOnUser==null){
-			String email = FacesContext.getCurrentInstance().getExternalContext().getRemoteUser();
-			Account acc = udao.getUserByEmail(email);  
-			loggedOnUser = acc; 
-		}
-		return loggedOnUser;
-	}
 		
 	public Boolean getEditMode() {
 		return editMode;
@@ -370,6 +284,8 @@ public class UsersBean implements Serializable{
 		return isAdminUser; 
 	}
 	
+	// END GETTERS AND SETTERS =================================================================================
+	
 	public String changePassword(){
 		
 		if(passwordChange.equals(PWCHANGE_YES)){
@@ -379,15 +295,157 @@ public class UsersBean implements Serializable{
 		}	
 		return null; 
 	}
-	
-	public String dummyValidate(){
-		return "";
-	}
-	
-	public void updateUserName(){
 		
+	private String hashPassword(String password) throws NoSuchAlgorithmException, UnsupportedEncodingException {		
+		//http://stackoverflow.com/questions/3103652/hash-string-via-sha-256-in-java
+		MessageDigest md = MessageDigest.getInstance("SHA-256");	
+		md.update(password.getBytes("UTF-8")); // Change this to "UTF-16" if needed			
+		//http://stackoverflow.com/questions/19743851/base64-java-encode-and-decode-a-string
+		return Base64.getEncoder().encodeToString(md.digest());		 
+	}
+			
+	public String edit(){
+		setEditMode(true);
+		return null;
+	}
+		
+	@Transactional
+	public String saveUser(boolean isSaveAndClose) throws NoSuchAlgorithmException, UnsupportedEncodingException {	
+		
+		/*
+		if(newPassword != null && !newPassword.isEmpty() && confirmNewPassword!= null && !confirmNewPassword.isEmpty()){
+			if(newPassword.equals(confirmNewPassword)){
+				user.setPasswd(hashPassword(newPassword));
+			}else{								
+				setError("userForm:np:newPassword","Passwords must match");
+				setError("userForm:cnp:confirmNewPassword","Passwords must match");				
+				return null;
+			}			
+		}
+		*/
+		
+		save();	
+		
+		if(isSaveAndClose){
+			return nb.getPageFrom() + "?faces-redirect=true";
+		}else{
+			passwordChange=PWCHANGE_NO; 
+			isNew=false;
+			return null;
+		}
 	}
 	
+	@Transactional
+	private void save()  {
+		if(isNew || passwordChange.equals(PWCHANGE_YES)){
+			try {
+				user.setPasswd(hashPassword(newPassword));
+				if(user instanceof AdminUser){
+					user = emAdmin.merge(user);
+				}else{
+					user = emHelp.merge(user);	
+				}
+			} catch (NoSuchAlgorithmException e) {
+				e.printStackTrace();
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+			} catch (Exception e){
+				e.printStackTrace();
+			}
+		}
+	}
+		
+	private EntityManager getEntityManager(){
+		if(user instanceof AdminUser){
+			return emAdmin; 
+		}else{
+			return emHelp; 
+		}
+	}
+	
+	/**
+	 * Calculates if the person accessing the user document has the write to delete it.
+	 * @return
+	 */
+	public boolean dspDeleteButton(){
+		// usersBean.editMode and usersBean.isAdminUser()  and !usersBean.new and user.role!='ADMIN'
+		boolean rtnVal = false; 
+		Account curUser = getLoggedOnUser() ; 
+			
+		if(!isNew &&
+			editMode && 
+			isAdminUser() && 
+			curUser.getRole().equals(ADMIN) && 
+			!curUser.getEmail().equals(user.getEmail()) 
+		){
+			rtnVal = true; 
+		}
+					
+		return rtnVal ; 
+	}
+		
+	@Transactional
+	public String  deleteUser(){
+		// Get the associated entityManager 
+		EntityManager tmpEM = getEntityManager(); 
+		
+		// Check to see if the current user is associated with any companies..
+		if(user instanceof User){
+			
+			// System.out.println("Check to see for associated companyUsers");
+			List<CompanyUser> cuList = null ;
+			TypedQuery<CompanyUser> tq = emHelp.createNamedQuery("findCompanyUserByUserId",CompanyUser.class);
+			tq.setParameter("userId", user.getId());
+			cuList = tq.getResultList();
+			if(cuList.size()>0){
+				//System.out.println("Beginning loop around Company Users...");
+				for(CompanyUser cu : cuList){
+					//System.out.println("Removeing: " + cu.getId() + " - " + cu.getFullName() );
+					emHelp.remove(emHelp.contains(cu) ? cu : emHelp.merge(cu));
+				}
+			}
+		}
+		// Now remove the user from the database... 
+		tmpEM.remove(tmpEM.contains(user) ? user : tmpEM.merge(user));			
+		return nb.getPageFrom() + "?faces-redirect=true";
+	}
+			
+	/**
+	 * Returns the User object of the logged on user based on their email address log-on name.
+	 * @return
+	 */
+	@Transactional
+	public Account getLoggedOnUser(){
+		if(loggedOnUser==null){
+			String email = FacesContext.getCurrentInstance().getExternalContext().getRemoteUser();
+			Account acc = udao.getUserByEmail(email);  
+			loggedOnUser = acc; 
+		}
+		return loggedOnUser;
+	}
+	
+	/**
+	 * When selecting a language preference, if the UsersBean is not in use (i.e. is not viewing/editing a user object)
+	 * Update the current logged on users language preference to the selected language.
+	 * @param locale
+	 */
+	@Transactional
+	public void setLoggedOnUserLanguage(String locale){
+		if(user==null){
+			try {
+				// TODO 
+				user=getLoggedOnUser();
+				//System.out.println("Set the prefered language:" + locale ) ;
+				user.setLanguage(locale);
+				//System.out.println("Save the user account");
+				save();
+				//System.out.println("Done saving current user");
+			} catch (Exception e){
+				e.printStackTrace();
+			}
+		}
+	}
+			
 	@Produces @Named 
 	 public Converter getUserConverter(){
 		return new Converter(){
@@ -421,6 +479,10 @@ public class UsersBean implements Serializable{
 			}
 		};
 	}	
+	
+	public String dummyValidate(){
+		return "";
+	}
 	
 	/* NOT REQUIRED - 24/10/16 - Using PasswordValidator now to validate passwords
 	
@@ -470,6 +532,10 @@ public class UsersBean implements Serializable{
 	@Transactional
 	private void commitUser(){
 		user = emHelp.merge(user);
+	}
+	
+	public void updateUserName(){
+		
 	}
 	*/
 }

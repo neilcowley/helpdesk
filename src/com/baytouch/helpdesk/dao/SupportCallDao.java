@@ -43,7 +43,6 @@ import javax.transaction.Transactional;
 import org.jsoup.safety.Whitelist;
 
 import com.baytouch.helpdesk.beans.FileControllerBean;
-import com.baytouch.helpdesk.beans.GlobalsBean;
 import com.baytouch.helpdesk.entities.Account;
 import com.baytouch.helpdesk.entities.AdminUser;
 import com.baytouch.helpdesk.entities.AttachInfo;
@@ -67,11 +66,9 @@ public class SupportCallDao implements Serializable {
 	
 	private String url; 
 	@PersistenceContext(unitName="helpdesk")
-	private EntityManager em;
+	private EntityManager emHelp ;
 	@Inject 
 	private UserDao udao; 
-	@Inject
-	private GlobalsBean gbean; 
 	@Inject 
 	private FileControllerBean fcbean; 
 	private static ResourceBundle bundle;
@@ -80,6 +77,9 @@ public class SupportCallDao implements Serializable {
 	private String moduleName;
 	List<AdminUser> adminUsers = null;
 	List<AdminUser> adminNotify = null;
+	private String defaultLanguage = "" ; 
+	private String language = "" ;
+	private String curLanguage = "" ; 
 		 	
 	/**
 	 * Reads the SupportCall database checking for new support call requests. 
@@ -99,6 +99,7 @@ public class SupportCallDao implements Serializable {
 			String provider = props.getProperty("mail.imap.protocol"); 
 			String username = props.getProperty("userName");
 			String password = props.getProperty("password");
+			defaultLanguage = props.getProperty("defaultLanguge");
 					
 			// Connect to the IMAP server
 			Session session = Session.getInstance(props,
@@ -107,7 +108,7 @@ public class SupportCallDao implements Serializable {
 			  			return new PasswordAuthentication(username, password);
 		        }
 			});
-			
+				
 			//System.out.println("1# - Connecting to mail box");
 			Store store = session.getStore(provider);
 			store.connect(host, null, null);
@@ -117,31 +118,31 @@ public class SupportCallDao implements Serializable {
 			if (!inbox.exists()) {
 			  return ""; 
 			}
+			inbox.open(Folder.READ_WRITE);
 			
 			//System.out.println("3# - Open the processed folder"); 
 			Folder processed = store.getFolder("processed");
 			if(!processed.exists()){
 				processed.create(Folder.HOLDS_MESSAGES);   
-			}
-						  
-			//System.out.println("4# - Get the messages from the server ...");
+			}			  
 			processed.open(Folder.READ_WRITE);
 		//	inbox.open(Folder.READ_ONLY);
-			inbox.open(Folder.READ_WRITE);
-			//System.out.println("5# - Find all the unread messages ...");
+
+			//System.out.println("4# - Find all the unread messages ...");
 			FlagTerm ft = new FlagTerm(new Flags(Flags.Flag.SEEN), false);
-			Message messages[] = inbox.search(ft); 
-		//	Message[] messages = inbox.getMessages(); TESTING ONLY
-			numMsgs = messages.length ;
-										
+			Message messages[] = inbox.search(ft);
+		//	Message[] messages = inbox.getMessages(); // TESTING ONLY
+			numMsgs = messages.length;
+		//	System.out.println("5# - Messages found: " + messages.length);
+			
 			if(messages.length > 0 ) {
-				System.out.println("*** PROCESSING Support call messages: " + messages.length + " ***");				
+				//System.out.println("*** PROCESSING Support call messages: " + messages.length + " ***");				
 				// Get a list of domains to check...
 				List<DomainSkip> domainsList = null; 
-				TypedQuery<DomainSkip> tq = em.createNamedQuery("findAllDomains",DomainSkip.class);
+				TypedQuery<DomainSkip> tq = emHelp.createNamedQuery("findAllDomains",DomainSkip.class);
 				domainsList = tq.getResultList() ; 
 				
-				// Add all ACTIVE domainsList values into a ArrayList so we can search them...
+				//System.out.println("Add all ACTIVE domainsList values into a ArrayList so we can search them..."); 
 				ignoreDomains = new ArrayList<String>(); 
 				for(DomainSkip dom : domainsList){
 					if(dom.isActive()){
@@ -149,18 +150,18 @@ public class SupportCallDao implements Serializable {
 					}
 				}	
 				
-				// Get a list of all the admin users who require notification of new support calls
+				//System.out.println("Get a list of all the admin users who require notification of new support calls"); 
 				adminNotify = new ArrayList<AdminUser>(); 
 				adminNotify = udao.getAllAdminHelpdeskNotifications();
 			
-				// Stores the details of all calls for the adminGroup
+				//System.out.println("Stores the details of all calls for the adminGroup"); 
 				String adminBody = "";
 
 				// Prepare HashMap to store details of the support calls by assigned, 
 				Map<String, List<SupportCall>> scCalls = new HashMap<String, List<SupportCall>>();
 				// Get a list of all Admin users for interrogation later
 				adminUsers = new ArrayList<AdminUser>();
-				// TODO - What to do if no admin users are returned?
+				// What to do if no admin users are returned?
 				adminUsers = udao.getAllAdminUsers();
 				// Prepare a slot for unassigned calls
 				scCalls.put(UNASSIGNED,  new ArrayList<SupportCall>() );
@@ -201,16 +202,19 @@ public class SupportCallDao implements Serializable {
 					adminBody += getCallDetails(sc, true);
 				}
 				
-		//		System.out.println("Begin by sending an email of all new support calls to the helpdesk manager group"); 		
+				//System.out.println("Begin by sending an email of all new support calls to the helpdesk manager group"); 
+				setLanguage(null);
 				for(AdminUser admin : adminNotify){
 					String tBody = "<p>" + getMessage("scd_email_newCallsNotify_body_part1") + ":</p>" + adminBody; 
 					sendMail(admin.getEmail(), getMessage("scd_email_newCallsNotify_subject") , tBody);
 				}
 				
  
-		//		System.out.println("loop through the batched up assigned support calls emailing the people who have been assigned to each support call."); 
+				//System.out.println("loop through the batched up assigned support calls emailing the people who have been assigned to each support call."); 
 				for (Entry<String, List<SupportCall>> entry : scCalls.entrySet()){
 				    String email = entry.getKey();
+				    Account admin = udao.getAdminUserByEmail(email);
+			    	setLanguage(admin); 
 				    List<SupportCall> scList = entry.getValue();
 				    String body = "<p>" + getMessage("scd_email_assigned_body_part1") + " :</p>"; 
 				    if(email != UNASSIGNED){
@@ -240,22 +244,26 @@ public class SupportCallDao implements Serializable {
 		return numMsgs.toString();	
 	}
 	
+	/**
+	 * Returns a message from the language file relating to the passed in key.
+	 * Pass the Account object in to the message and check the object for the language preference  
+	 * @param key
+	 * @return
+	 */
 	private String getMessage(String key){
-		// System.out.println("key to get=" + key);
-		if(bundle == null){
-			// System.out.println("Getting the properties file");
-			String locale = gbean.getLocale();
-			// System.out.println("Locale=" + locale  + "=" );
-			String langVal = !locale.equals("") && !locale.equals("en") ? "_" + locale : "";
+		if(bundle == null || !curLanguage.equals(language)){
+			// System.out.println("*** getMessage getting bundle for language: "  + language  + " - key to get=" + key );
+			String langVal = !language.equals("") && !language.equals("en") ? "_" + language : "";
 			// System.out.println("Properties will be: " + langVal );
 			bundle = ResourceBundle.getBundle("com.baytouch.helpdesk.language.select" + langVal);
+			curLanguage=language;
 		}
 		return bundle.getString(key);
 	}
 		
 	private SupportCall createSupportCall(Message msg, int count) throws MessagingException, IOException{
 		
-	//	System.out.println("CREATING SUPPORT CALL FOR: " +  msg.getSubject() );
+		// System.out.println("CREATING SUPPORT CALL FOR: " +  msg.getSubject() );
 		SupportCall sc = new SupportCall();
 		String from = InternetAddress.toString(msg.getFrom());
 		Address[] froms = msg.getFrom();
@@ -277,16 +285,16 @@ public class SupportCallDao implements Serializable {
 		sc.setDateCreated(msg.getSentDate());
 		sc.setSubject( msg.getSubject());
 		sc.setCallRefs(sc.getCallRefs(count));
-		// Initialise a new set for any attachments
+		// System.out.println("Initialise a new set for any attachments"); 
 		sc.setAttachments(new LinkedHashSet<AttachInfo>());
 		sc.setCallDetails(getTextFromMessage(sc, msg));
 		
-		// Lookup the name of the person who sent the support call
+		// System.out.println("Lookup the name of the person who sent the support call"); 
 		Account user = lookupUser(senderEmail); 
-		// If the person has an account assign the account to the support call
+		// System.out.println("If the person has an account assign the account to the support call"); 
 		if(user != null){
 			setCreatedBy(user,sc);
-			// Lookup company user
+			// System.out.println("Lookup company user"); 
 			CompanyUser compUser = lookupCompanyUser(user); 
 			if(compUser !=null){
 				sc.setCompanyUser(compUser);
@@ -295,30 +303,42 @@ public class SupportCallDao implements Serializable {
 				sc.setCallType(company.getTypeOfSupport());
 			}
 		}
+		// System.out.println("Set the assiged user id if possible");
 		sc.setAssignedToId(lookupAdminUser(from));
 		if(sc.getAssignedToId()!=null && sc.getCompany() != null ){
 			status="in_progress";
 		}
+		// System.out.println("Set status") ;
 		sc.setStatus(status);
+		// System.out.println("Create history") ; 
 		createHistory(sc);
 		// Stackoverflow - http://stackoverflow.com/questions/26463537/get-entity-jpa-id-after-merge
 		// The result of the merge operation is not the same as with the persist operation - the entity passed to merge does not become managed. Rather, 
 		// a managed copy of the entity is created and returned. This is why the original new entity will not get an id. return the result of merge instead
-		return em.merge(sc);
+		// System.out.println("Merge and return");
+		return emHelp.merge(sc);
 	}
 		
 	private void createHistory(SupportCall sc){
-		// Create a new comment in the history field ...
+		// System.out.println("Create a new comment in the history field ..."); 
 		DateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy");
 		DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
+		// System.out.println("Get a calendar");
 		Calendar cal = Calendar.getInstance();
+		// System.out.println("Get the details of the message...");
 		String detail = getMessage("scd_history_newCallGenerated_part1") + " " + dateFormat.format(cal.getTime()) + 
-				getMessage("scd_history_newCallGenerated_part2") + " " + timeFormat.format(cal.getTime()); 
+				getMessage("scd_history_newCallGenerated_part2") + " " + timeFormat.format(cal.getTime()); 	
+		// System.out.println("Create a new comment") ;
 		Comments comments = new Comments();
+		// System.out.println("Assign details to comment"); 
 		comments.setComments(detail);
+		// System.out.println("Assign comment to support call") ; 
 		comments.setSupportCall(sc);
+		// System.out.println("Now add the comment ot the support call in a new hashSet");
 		sc.setCallComments(new  LinkedHashSet<Comments>());
+		// System.out.println("Add it now");
 		sc.getCallComments().add(comments);
+		// System.out.println("Done adding it...");
 	}
 	
 	/**
@@ -374,12 +394,24 @@ public class SupportCallDao implements Serializable {
 	 * @throws IOException
 	 */
 	private void sendResponse(SupportCall sc) throws AddressException, MessagingException, IOException{
-		// Check to see the senders domain is not in the ignoreDomains list
+		setLanguage(sc.getCreatedByUser());
 		String body = "<p>" +  getMessage("scd_email_response_body_part1") + ".<br />" + 
 				getMessage("scd_email_response_body_part2") + ": " + sc.getCallRefs() + ".<br />" + 
 				getMessage("scd_email_response_body_part3") + ".</p><br />" + 
 				"<b>"+ getMessage("scd_email_response_body_part4") + ":</b><br />" + sc.getCallDetails() + "<br />";	
 		sendMail(sc.getSenderEmail(), getMessage("scd_email_response_subject") + ": " + sc.getCallRefs(), body);	
+	}
+	
+	/** 
+	 * Check the current account for language settings, if found set the email language to their choice
+	 * @param acc
+	 */
+	private void setLanguage(Account acc){
+		language=""; 
+		if (acc != null){
+			language = acc.getLanguage();
+		}
+		language = !language.equals("") ? language : defaultLanguage ;	
 	}
 	
 	/**
@@ -558,10 +590,10 @@ public class SupportCallDao implements Serializable {
 	public CompanyUser lookupCompanyUser(Account user){	
 		List<CompanyUser> compUserList = null; 
 		CompanyUser compUser = null; 
-		EntityGraph<CompanyUser> graph = em.createEntityGraph(CompanyUser.class);
+		EntityGraph<CompanyUser> graph = emHelp.createEntityGraph(CompanyUser.class);
 		graph.addAttributeNodes("company");
 		graph.addAttributeNodes("user");
-		TypedQuery<CompanyUser> tq = em.createNamedQuery("findCompanyUser",CompanyUser.class);
+		TypedQuery<CompanyUser> tq = emHelp.createNamedQuery("findCompanyUser",CompanyUser.class);
 		tq.setParameter("userId",user.getId());
 		tq.setHint("javax.persistence.loadgraph", graph);
 		compUserList = tq.getResultList();
@@ -576,21 +608,21 @@ public class SupportCallDao implements Serializable {
 	
 	public List<SupportCall> getCallsByCompanyId(int compId){
 		TypedQuery<SupportCall> tq;		
-		tq = em.createNamedQuery("findCompanyCalls",SupportCall.class);
+		tq = emHelp.createNamedQuery("findCompanyCalls",SupportCall.class);
 		tq.setParameter("companyId", compId);
 		return tq.getResultList(); 
 	}
 	
 	public List<SupportCall> getCallsByStatus(String status){
 		TypedQuery<SupportCall> tq;		
-		tq = em.createNamedQuery("findCallsByStatus",SupportCall.class);
+		tq = emHelp.createNamedQuery("findCallsByStatus",SupportCall.class);
 		tq.setParameter("status", status);
 		return tq.getResultList(); 
 	}
 	
 	public List<SupportCall> getCallsByAssignedByStatus(Integer adminId, String status){
 		TypedQuery<SupportCall> tq;		
-		tq = em.createNamedQuery("findCallsByAssignedByStatus",SupportCall.class);
+		tq = emHelp.createNamedQuery("findCallsByAssignedByStatus",SupportCall.class);
 		tq.setParameter("adminId", adminId);
 		tq.setParameter("status", status);
 		return tq.getResultList();

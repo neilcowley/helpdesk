@@ -30,7 +30,7 @@ public class UserDao{
 			rtnList.add(getAdminUserByEmail(email));
 		}
 		return rtnList.get(0); 
-	}	
+	}
 			
 	public Account getAdminUserByEmail(String email){
 		TypedQuery<AdminUser> findAdmin = emAdmin.createNamedQuery("findAdminUserByEmail",AdminUser.class);

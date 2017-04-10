@@ -23,6 +23,4 @@ public class ReadMail  {
     	// String tMsgs = testClass.checkSupportCalls();
     	System.out.println("Finished checking messages. Process: " + tMsgs); 
     }
-    
-
 }

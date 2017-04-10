@@ -17,6 +17,7 @@ public abstract class Account {
 	private String passwd;
 	private String email;
 	private String role;
+	private String language ;
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,18 +42,6 @@ public abstract class Account {
 		this.lastName = lastName;
 	}
 	public String getUserName(){
-	/*	System.out.println("Getting UserName=" + userName + "=" );
-		if(userName==null){
-			System.out.println("Username is null");
-			if(firstName!= null && lastName!=null){
-				System.out.println("First name and surname are blank");
-				userName = firstName + " " + lastName ; 
-				System.out.println("Setting Username to=" + userName);
-			}
-		}else{
-			
-		}
-	*/
 		return userName;
 	}
 	public void setUserName(String userName){
@@ -78,12 +67,12 @@ public abstract class Account {
 		//System.out.println("Setting roll for: " + userName + " role=" + role );
 		this.role = role;
 	}
-	
-	/* TODO - SPEAK TO PHIL ABOUT THIS
-	public String readHelpdeskNotification(){
-		return "" ;
-	}*/
-	
+	public String getLanguage() {
+		return language;
+	}
+	public void setLanguage(String language) {
+		this.language = language;
+	}
 	@Override
 	public boolean equals(Object obj) {
 		

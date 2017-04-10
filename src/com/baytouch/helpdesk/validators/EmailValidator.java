@@ -5,7 +5,10 @@ import java.io.Serializable;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.el.ValueExpression;
 import javax.enterprise.inject.Model;
+import javax.faces.application.Application;
 import javax.faces.application.FacesMessage;
 import javax.faces.component.EditableValueHolder;
 import javax.faces.component.UIComponent;
@@ -16,7 +19,9 @@ import javax.faces.validator.ValidatorException;
 import javax.inject.Inject;
 
 import com.baytouch.helpdesk.beans.GlobalsBean;
+import com.baytouch.helpdesk.beans.UsersBean;
 import com.baytouch.helpdesk.dao.UserDao;
+import com.baytouch.helpdesk.entities.Account;
 
 @Model
 @FacesValidator("EmailValidator")
@@ -42,16 +47,17 @@ public class EmailValidator implements Validator, Serializable {
 	public void validate(FacesContext context, UIComponent component, Object value) throws ValidatorException {		
 		
 		boolean isError = false; 
-		String msgVal = "" ;
+		String msgVal ="";
 		matcher = pattern.matcher(value.toString());
 		
 		Properties props = new Properties();
     	ClassLoader cl = Thread.currentThread().getContextClassLoader();
     	try {
     		String locale = gbean.getLocale();
-    		String languagePropFile="com/baytouch/helpdesk/language/select" + (locale!=""?"_" + locale : "") + ".properties"; 
-			props.load(cl.getResourceAsStream(languagePropFile));	
-		} catch (IOException e) {
+    		String lang = locale.equals(GlobalsBean.DEFAULT_LANG)? "" : locale; 
+    		String languagePropFile="com/baytouch/helpdesk/language/select" + (lang!="" ? "_" + lang : "") + ".properties"; 
+			props.load(cl.getResourceAsStream(languagePropFile));
+		} catch (IOException e){
 			e.printStackTrace();
 		}    	
 		
@@ -62,9 +68,18 @@ public class EmailValidator implements Validator, Serializable {
 		}
 		
 		// Check the email address is unique
-		if(udao.getUserByEmail(value.toString())!=null){
-			msgVal = " " + props.getProperty("field_validate_email_exists"); // " eMail address already exists";
-			isError=true;
+		Account acc = udao.getUserByEmail(value.toString());
+		if(acc!=null){
+			// Get the currently edited account
+			Application app = context.getApplication();
+			ValueExpression expression = app.getExpressionFactory().createValueExpression( context.getELContext(),"#{usersBean}", Object.class );
+			UsersBean uBean = (UsersBean) expression.getValue( context.getELContext() );
+			Account curUser = uBean.getUser();
+			// If the id of the currently edited account is different to the id of the email address then the email address already exists withing the DB
+			if( !acc.getId().equals(curUser.getId())){
+				msgVal = " " + props.getProperty("field_validate_email_exists"); // " eMail address already exists";
+				isError=true;
+			}
 		}
 
 		if(isError){
